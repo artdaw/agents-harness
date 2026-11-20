@@ -1,6 +1,11 @@
+---
+name: harness-git
+description: Use before any git commit, branch switch, or staging. Branch safety, diff checks, commit message format, and the commit-msg hook.
+---
+
 # Git rules
 
-In customer mode, the `ENGAGEMENT.md` conventions replace the Branch and Commit message sections.
+In customer mode, the `ENGAGEMENT.md` conventions replace the Branch and Commit message sections of this skill.
 The Forbidden section always applies.
 
 ## Branch
@@ -48,7 +53,8 @@ VERIFICATION:
 Write the message to a file. Run `git commit -F <file>`.
 Do not use `git commit -m` for a multi-line message.
 The `commit-msg` hook rejects escaped `\n`, bodies that end in `...`,
-missing sections, and bad titles. Install it with `make hooks-install`.
+missing sections, and bad titles. The hook is `hooks/commit-msg` in this skill.
+A human installs it in their own repositories. Do not install it in a customer repository.
 
 ## Do not write in commits
 - Names of AI, agents, models, prompts, or tools.

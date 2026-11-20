@@ -106,20 +106,23 @@ The human is still the engineer. The model is a very capable, occasionally overc
 
 The repository is organized into a small core and supporting modules loaded only when needed.
 
-| File              | Responsibility                                                                                                                                                                            |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `AGENTS.md`       | Core rules: mission, scope, safe decisions, pre-edit checks, stack detection, Ponytail Ladder, bug fixing, testing, recovery, tooling, on-demand docs, done checklist, and report format. |
-| `debug.md`        | Root-cause debugging. Reproduce first. Do not mask errors or weaken tests.                                                                                                                |
-| `deps.md`         | Dependency rules, package commands, and safety checks before adding or bumping packages.                                                                                                  |
-| `benchs/evals.md` | Test scenarios and scoring for rule changes.                                                                                                                                              |
-| `git.md`          | Branch safety, diff checks, staging discipline, and commit message rules.                                                                                                                 |
-| `refactor.md`     | Structural refactors without changing behavior.                                                                                                                                           |
-| `review.md`       | Pre-report sanity check for scope, leftovers, correctness, and honesty.                                                                                                                   |
-| `sdd.md`          | Spec-driven flow for features, APIs, schemas, and architecture shifts.                                                                                                                    |
-| `security.md`     | Input boundaries, injection defense, secrets hygiene, and auth/network rules.                                                                                                             |
-| `testing.md`      | Behavior tests, real boundaries, clean test data, flaky test rules, and stack test commands.                                                                                              |
-| `stacks/`         | Per-stack instructions loaded only when relevant.                                                                                                                                         |
-| `project-init.fish` | Sets up a project: own project (Git, `.gitignore`, `AGENTS.md`) or customer project (`--client`, local `ENGAGEMENT.md`).                                                                 |
+| Path                         | Responsibility                                                                                                   |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `AGENTS.md`                  | Core rules, always loaded: mission, scope, decisions, customer mode, search, testing, recovery, skills, report. |
+| `skills/harness-git/`        | Branch safety, diff checks, staging, commit message format, and the `commit-msg` hook.                          |
+| `skills/harness-debug/`      | Root-cause debugging. Reproduce first. Do not mask errors or weaken tests.                                      |
+| `skills/harness-testing/`    | Behavior tests, mocks, test data, flaky tests, and test commands by stack.                                      |
+| `skills/harness-deps/`       | Dependency checks and package commands before you add or upgrade a package.                                     |
+| `skills/harness-security/`   | Input boundaries, injection defense, secrets, auth, and network rules.                                          |
+| `skills/harness-refactor/`   | Structure changes without behavior changes.                                                                     |
+| `skills/harness-sdd/`        | Spec-driven flow for features, APIs, schemas, and architecture changes.                                         |
+| `skills/harness-review/`     | Check before the final report: scope, leftovers, correctness, and honesty.                                      |
+| `stacks/`                    | Per-stack sections. `project-init` copies them into a project `AGENTS.md` or `ENGAGEMENT.md`.                   |
+| `bin/project-init.fish`      | Sets up a project: own project (Git, `.gitignore`, `AGENTS.md`) or customer project (`--client`).               |
+| `evals/evals.md`             | Test scenarios and scoring for rule changes.                                                                    |
+
+Skills use the `SKILL.md` format, so Claude Code and OpenCode load each one only when the task matches its description.
+The `harness-` prefix prevents name conflicts with other installed skills.
 
 ### Stack-specific rules
 
@@ -132,7 +135,7 @@ The repository is organized into a small core and supporting modules loaded only
 - `stacks/terraform.md`
 - `stacks/web.md`
 
-The core document defines the rules. Supporting files provide the details.
+The core document defines the rules. Skills and stack files provide the details.
 
 No need to load the entire rulebook to fix a typo. We have better things to do.
 
@@ -252,7 +255,7 @@ This repository reflects an actual working environment rather than an imaginary 
 The rules use one fixed path, so both runtimes read the same files:
 
 ```fish
-ln -s (pwd) ~/.config/agents-harness
+ln -s ~/Claude_Cowork/agents-harness ~/.config/agents-harness
 ```
 
 Claude Code: add this line to `~/.claude/CLAUDE.md`:
@@ -265,6 +268,21 @@ OpenCode: link the global rules file:
 
 ```fish
 ln -s ~/.config/agents-harness/AGENTS.md ~/.config/opencode/AGENTS.md
+```
+
+Skills: link each skill into both runtimes. Run this again after you add a skill:
+
+```fish
+for s in ~/.config/agents-harness/skills/*
+    ln -sfn $s ~/.claude/skills/
+    ln -sfn $s ~/.config/opencode/skills/
+end
+```
+
+`project-init` on your PATH:
+
+```fish
+ln -s ~/.config/agents-harness/bin/project-init.fish ~/.local/bin/project-init
 ```
 
 Do not put the rule files in `~/.config/opencode/agents/`. OpenCode reads that directory as agent definitions.
@@ -288,7 +306,7 @@ If a customer allows only OpenAI, use OpenCode.
 For work in a customer repository (forward deployment, consulting):
 
 ```fish
-~/.config/agents-harness/project-init.fish --client "Acme" --provider anthropic,openai
+project-init --client "Acme" --provider anthropic,openai
 ```
 
 The script:
@@ -303,14 +321,14 @@ When `ENGAGEMENT.md` exists, the agent follows the "Customer mode" section in `A
 - It stops if its model provider is not allowed.
 - It does not send customer code or data to services that are not allowed.
 - It changes only the allowed environments.
-- It follows the customer conventions instead of the defaults in `stacks/` and `git.md`.
+- It follows the customer conventions instead of the defaults in `stacks/` and the `harness-git` skill.
 
 ---
 
 ## How to Use
 
 1. Install the harness (see Install).
-2. In each project, run `project-init.fish`. Add `--client` for a customer repository.
+2. In each project, run `project-init`. Add `--client` for a customer repository.
 3. Fill in the placeholders that the script reports.
 4. Check the stack sections against the actual project.
 5. Run a small task and inspect agent behavior.
@@ -328,7 +346,7 @@ Instructions are software too.
 
 They can become outdated, contradictory, overly restrictive, or simply ineffective.
 
-Use `benchs/evals.md` to evaluate changes to the agent rules.
+Use `evals/evals.md` to evaluate changes to the agent rules.
 
 Useful evaluation scenarios include:
 

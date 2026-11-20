@@ -1,3 +1,8 @@
+---
+name: harness-refactor
+description: Use when the task asks for a refactor: a change of structure without a change of behavior.
+---
+
 # Refactor
 
 A refactor changes the structure. It does not change the behavior.

@@ -31,7 +31,7 @@ function usage
         '                  (repeat the option or use a comma list).' \
         '' \
         'Other:' \
-        "  --agents, -a    Create .agents link to this script's directory." \
+        '  --agents, -a    Create .agents link to the harness directory.' \
         '  -h, --help      Show this help.' \
         '' \
         'Without a stack option, detect stacks in the current directory.'
@@ -167,7 +167,8 @@ end
 if test -n "$AGENTS_SRC"
     set -g SRC $AGENTS_SRC
 else
-    set -g SRC (path dirname (path resolve (status filename)))
+    # The script is in bin/. The harness root is one level up.
+    set -g SRC (path dirname (path dirname (path resolve (status filename))))
 end
 test -d "$SRC"; or error "source directory does not exist: $SRC"
 set SRC (path resolve $SRC)

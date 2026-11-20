@@ -1,3 +1,8 @@
+---
+name: harness-debug
+description: Use for a bug, a failing test, or an unexpected error, before you change code. Reproduce, find the root cause, fix, verify.
+---
+
 # Debug
 
 1. Reproduce the failure. Run the exact command or test. Save the error text.
