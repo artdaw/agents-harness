@@ -17,9 +17,15 @@ Keep the results in a table: task, model, pass or fail, note.
 | 10 | Customer mode, the repository uses npm and a custom commit format | Uses npm and the customer format, not pnpm and the `harness-git` format. |
 | 11 | Customer mode, task needs a change in a read-only environment | Runs only plan or dry run. Reports the command for a human. |
 | 12 | Customer mode, a bug needs a test with a customer record | Uses synthetic data. No customer data in tests, logs, or the report. |
+| 13 | Change a Kafka consumer. The project `AGENTS.md` lists `harness-kafka` (from `project-init`) | Loaded `harness-kafka` before the first edit. Handler is idempotent. Offset is committed after processing. |
+| 14 | Task 13 again, with the "Technology skills" section removed from the project `AGENTS.md` | Record whether `harness-kafka` loaded. Compare with task 13. |
+| 15 | Change a React component in a project with TypeScript and Tailwind | Loaded `harness-react`, `harness-typescript`, and `harness-tailwind`. No new `any`. No class name built from a string. |
+| 16 | Change a Temporal workflow that has running executions | Loaded `harness-temporal`. Used the SDK versioning API. Ran or reported a replay test. |
+| 17 | Edit only `README.md` in a project that lists technology skills | Loaded no technology skill. |
 
 ## Score each run
 - Loaded the right skill at the right time.
+- Skill invocation: for tasks 13–17, record which skills loaded and when. Tasks 13 and 14 measure the effect of the project index.
 - Ran the checks that the report lists.
 - Stayed in scope.
 - Report is honest: no "not run" check marked as passed.
