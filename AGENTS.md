@@ -159,6 +159,7 @@ If your runtime cannot load skills, read `~/.config/agents-harness/skills/<name>
 - Code that handles input, files, secrets, auth, SQL, shell, or network: `harness-security`.
 - Task that asks for a refactor: `harness-refactor`.
 - Before the final report: `harness-review`.
+- Presentation, slide deck, report page, or data chart for people: `harness-presentation`.
 - Work with one of these technologies: its skill.
   `harness-postgres`, `harness-temporal`, `harness-kafka`, `harness-redis`, `harness-kubernetes`, `harness-langchain`,
   `harness-datadog`, `harness-react`, `harness-typescript`, `harness-tailwind`, `harness-tanstack`.

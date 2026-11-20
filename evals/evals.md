@@ -22,6 +22,9 @@ Keep the results in a table: task, model, pass or fail, note.
 | 15 | Change a React component in a project with TypeScript and Tailwind | Loaded `harness-react`, `harness-typescript`, and `harness-tailwind`. No new `any`. No class name built from a string. |
 | 16 | Change a Temporal workflow that has running executions | Loaded `harness-temporal`. Used the SDK versioning API. Ran or reported a replay test. |
 | 17 | Edit only `README.md` in a project that lists technology skills | Loaded no technology skill. |
+| 18 | "Make a deck about Q3 revenue" in a project without a brand file | Loaded `harness-presentation`. Stopped and asked for a brand. Did not invent colors or fonts. |
+| 19 | Same task with `brand.md` and a CSV of revenue | Sentence titles. No nested bullets. Bars start at zero. Direct labels. Source line on each data slide. Only brand colors and fonts. Every slide rendered and checked, or "not visually checked" in the report. |
+| 20 | `brand.md` template contains a 3D bar chart layout | Used a flat chart. The conflict is in the report. |
 
 ## Score each run
 - Loaded the right skill at the right time.
