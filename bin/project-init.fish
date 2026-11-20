@@ -9,6 +9,13 @@
 set -g SCRIPT_NAME (path basename (status filename))
 # Order of stack sections in generated files.
 set -g ALL_STACKS python go java node web terraform docker sql
+# Technology skills (skills/harness-<name>), in output order. A pattern matches manifest text;
+# an empty pattern means detection by files only (see below).
+set -g TECH_NAMES postgres temporal kafka redis kubernetes langchain datadog react typescript tailwind tanstack
+set -g TECH_LABELS PostgreSQL Temporal Kafka Redis Kubernetes LangChain Datadog React TypeScript Tailwind TanStack
+set -g TECH_PATTERNS 'postgres|psycopg|asyncpg|"pg"|jackc/pgx|lib/pq' 'temporalio|go\.temporal\.io|io\.temporal' \
+    'kafka|sarama' 'redis|valkey' '' 'langchain|langgraph' 'ddtrace|dd-trace|datadog' '"react"' '"typescript"' \
+    'tailwindcss' '@tanstack/'
 
 function usage
     printf '%s\n' \
@@ -31,10 +38,12 @@ function usage
         '                  (repeat the option or use a comma list).' \
         '' \
         'Other:' \
-        "  --agents, -a    Create .agents link to this script's directory." \
+        '  --agents, -a    Create .agents link to the harness directory.' \
         '  -h, --help      Show this help.' \
         '' \
-        'Without a stack option, detect stacks in the current directory.'
+        'Without a stack option, detect stacks in the current directory.' \
+        'Technology skills (harness-postgres, harness-kafka, and others) are always detected from' \
+        'the manifests in the current directory and listed in AGENTS.md or ENGAGEMENT.md.'
 end
 
 # fish has no `set -e`: every step that can fail is checked with `or error`.
@@ -58,6 +67,10 @@ function add_stack
     for s in $argv
         contains -- $s $SELECTED; or set -ga SELECTED $s
     end
+end
+
+function add_tech
+    contains -- $argv[1] $FOUND_TECHS; or set -ga FOUND_TECHS $argv[1]
 end
 
 # The first line of each block is its marker, used to detect existing blocks.
@@ -167,7 +180,8 @@ end
 if test -n "$AGENTS_SRC"
     set -g SRC $AGENTS_SRC
 else
-    set -g SRC (path dirname (path resolve (status filename)))
+    # The script is in bin/. The harness root is one level up.
+    set -g SRC (path dirname (path dirname (path resolve (status filename))))
 end
 test -d "$SRC"; or error "source directory does not exist: $SRC"
 set SRC (path resolve $SRC)
@@ -215,6 +229,31 @@ for c in $ALL_STACKS
     contains -- $c $SELECTED; and set -ga STACKS $c
 end
 
+# Detect technology skills from manifests. Lockfiles are not read: they list transitive dependencies.
+# shortcut: only the current directory is scanned, like stack detection; run again in each subproject of a monorepo.
+set -g FOUND_TECHS
+set -l manifests package.json pyproject.toml requirements*.txt go.mod pom.xml build.gradle build.gradle.kts \
+    compose.yaml compose.yml docker-compose.yaml docker-compose.yml
+set manifests (path filter -f $manifests)
+if set -q manifests[1]
+    # Indirect Go dependencies are not used by the project code.
+    set -l deps (cat $manifests | string match -v -- '*// indirect*')
+    for i in (seq (count $TECH_NAMES))
+        test -n "$TECH_PATTERNS[$i]"; or continue
+        printf '%s\n' $deps | grep -qiE -- $TECH_PATTERNS[$i]; and add_tech $TECH_NAMES[$i]
+    end
+end
+test -f tsconfig.json; and add_tech typescript
+if test (count (path filter -f Chart.yaml kustomization.yaml kustomization.yml skaffold.yaml)) -gt 0
+    or test (count (path filter -d k8s kubernetes helm charts)) -gt 0
+    add_tech kubernetes
+end
+set -g TECHS
+for t in $TECH_NAMES
+    contains -- $t $FOUND_TECHS; and set -ga TECHS $t
+end
+set -q TECHS[1]; and echo "Detected technology skills: $TECHS"
+
 # Validate every source and destination before making changes.
 command -q git; or error 'git is required but was not found in PATH'
 
@@ -222,6 +261,9 @@ for stack in $STACKS
     set -l stack_file $SRC/stacks/$stack.md
     test -f $stack_file -a -s $stack_file; or error "missing or empty stack file: $stack_file"
     string match -q -- '## Stack:*' (head -n 1 $stack_file); or error "$stack_file must start with '## Stack:'"
+end
+for t in $TECHS
+    test -f $SRC/skills/harness-$t/SKILL.md; or error "missing skill file: $SRC/skills/harness-$t/SKILL.md"
 end
 
 if set -q _flag_agents
@@ -242,7 +284,9 @@ else
         error '.gitignore exists but is not a regular file'
     end
     if test -L AGENTS.md
-        set -q STACKS[1]; and warn 'AGENTS.md is a symlink; stack sections will not be written to the shared file'
+        if set -q STACKS[1]; or set -q TECHS[1]
+            warn 'AGENTS.md is a symlink; stack sections and skill lines will not be written to the shared file'
+        end
     else if test -e AGENTS.md -a ! -f AGENTS.md
         error 'AGENTS.md exists but is not a regular file'
     end
@@ -291,7 +335,7 @@ else
         end
     end
 
-    if set -q STACKS[1]; and not test -e AGENTS.md
+    if set -q STACKS[1]; or set -q TECHS[1]; and not test -e AGENTS.md
         printf '%s\n' \
             '# AGENTS.md' \
             '' \
@@ -324,6 +368,26 @@ if set -q STACKS[1]; and not test -L $TARGET
             else
                 printf '%s: added %s. Update the Layout line.\n' $TARGET $stack
             end
+        end
+    end
+end
+
+# List the technology skills, one self-contained line each, so the agent loads them.
+# A rerun appends only missing lines, and each line stays correct wherever it lands.
+if set -q TECHS[1]; and test -f $TARGET -a ! -L $TARGET
+    set -l marker '<!-- harness-skills -->'
+    if not grep -qxF -- $marker $TARGET
+        printf '\n%s\n%s\n' $marker '## Technology skills' >>$TARGET; or error "cannot write $TARGET"
+    end
+    for i in (seq (count $TECH_NAMES))
+        contains -- $TECH_NAMES[$i] $TECHS; or continue
+        set -l skill harness-$TECH_NAMES[$i]
+        if grep -qF -- "`$skill`" $TARGET
+            printf '%s: %s present, skip\n' $TARGET $skill
+        else
+            printf '- This project uses %s. Load `%s` before you change code that uses it.\n' \
+                $TECH_LABELS[$i] $skill >>$TARGET; or error "cannot write $TARGET"
+            printf '%s: added %s\n' $TARGET $skill
         end
     end
 end

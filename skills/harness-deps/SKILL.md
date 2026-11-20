@@ -1,3 +1,8 @@
+---
+name: harness-deps
+description: Use before you add, remove, or upgrade a dependency. Selection checks, package commands, and report rules.
+---
+
 # Dependencies
 
 Add a dependency only when no existing code, standard library, native capability, or installed dependency covers the need.

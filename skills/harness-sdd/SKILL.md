@@ -1,3 +1,8 @@
+---
+name: harness-sdd
+description: Use before you implement a new feature, public API, schema, persistence, or architecture change. Write the spec first.
+---
+
 # SDD
 
 No user is available. Do not ask questions.

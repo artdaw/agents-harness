@@ -1,3 +1,8 @@
+---
+name: harness-review
+description: Use before the final report of any task that changed files. Checks scope, leftovers, correctness, and report honesty.
+---
+
 # Review before the final report
 
 Run `git diff` and `git status`. Read the full diff. Answer each question.

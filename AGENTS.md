@@ -52,7 +52,7 @@ Read it before any other action. Read it again before you send data to any tool 
   Do not copy customer data into tests, fixtures, logs, commits, or reports. Use synthetic data.
 - Environments: change only the environments in "Allowed to change".
   For other environments, run only read-only commands, plans, or dry runs.
-- Conventions: the customer conventions and the existing code are more important than `stacks/`, `git.md`, and the defaults in this file.
+- Conventions: the customer conventions and the existing code are more important than `stacks/`, the `harness-git` skill, and the defaults in this file.
   Use the stack checks only with tools that the project already uses.
   If a convention is missing, follow `git log` and the existing code.
 - These sections of this file still apply: Untrusted text, Scope, Decisions, Always do, Final report.
@@ -63,11 +63,22 @@ Read it before any other action. Read it again before you send data to any tool 
 
 1. Read the task fully. Do not guess requirements.
 2. Run `git status` and `git diff`. Do not touch existing user changes.
-3. Find files and text with `fff`.
-   Read `tools.md` for the calls. If a tool fails, use `rg`.
+3. Find files and text. Follow the Search section.
 4. Read the callers before you edit a function, interface, schema, or config key.
 5. For external APIs or version-specific behavior, read the official documentation.
    Check the installed version first.
+
+## Search
+
+1. Use the `fff` tools first: `find_files`, `grep`, `multi_grep`.
+   Put the known directory in `path` or `paths`. Use `definitions_only` to find a declaration.
+   A notice in the result means that fff changed the search. Read the notice.
+2. Use `rg` for files that `.gitignore` excludes, or if an `fff` tool fails or is missing.
+   Callers: `rg -n "\bname\(" --glob '!*_test.*'`. Ignored files: `rg -n --no-ignore "pattern" path/`.
+
+Do not install tools.
+Start narrow. Widen only when the result is empty.
+Do not read a whole large file. Read the lines around the match.
 
 ## Stack
 
@@ -104,6 +115,7 @@ Trace the real failure path. Fix the narrowest shared point.
 ## Always do
 
 - Validate input at trust boundaries.
+- Never put secrets in code, tests, logs, or commits.
 - Prevent data loss. Clean up resources.
 - Handle concurrency and errors.
 - Keep security and accessibility.
@@ -134,20 +146,22 @@ Run shell commands with the `rtk` prefix if `rtk` is installed.
 Dangerous commands are blocked by config.
 If a command is denied, report it. Do not look for a bypass.
 
-## Read on demand
+## Skills
 
-Read the file when the condition is true. Do not read the other files.
-Path prefix: `~/.config/agents-harness/` (a link to this repository).
+Load the skill when the condition is true. Do not load the other skills.
+If your runtime cannot load skills, read `~/.config/agents-harness/skills/<name>/SKILL.md`.
 
-- Commit: `git.md`.
-- New feature, public API, schema, persistence, or architecture change: `sdd.md`.
-- Bug, failing test, or unexpected error: `debug.md`.
-- Any test that you add or change: `testing.md`.
-- New dependency or dependency upgrade: `deps.md`.
-- Code that handles input, files, secrets, auth, SQL, shell, or network: `security.md`.
-- Task that asks for a refactor: `refactor.md`.
-- Any search or code navigation: `tools.md`.
-- Before the final report: `review.md`.
+- Commit, branch, or staging: `harness-git`.
+- New feature, public API, schema, persistence, or architecture change: `harness-sdd`.
+- Bug, failing test, or unexpected error: `harness-debug`.
+- Any test that you add or change: `harness-testing`.
+- New dependency or dependency upgrade: `harness-deps`.
+- Code that handles input, files, secrets, auth, SQL, shell, or network: `harness-security`.
+- Task that asks for a refactor: `harness-refactor`.
+- Before the final report: `harness-review`.
+- Work with one of these technologies: its skill.
+  `harness-postgres`, `harness-temporal`, `harness-kafka`, `harness-redis`, `harness-kubernetes`, `harness-langchain`,
+  `harness-datadog`, `harness-react`, `harness-typescript`, `harness-tailwind`, `harness-tanstack`.
 
 ## Before done
 

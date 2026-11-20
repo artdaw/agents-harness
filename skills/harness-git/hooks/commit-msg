@@ -1,0 +1,35 @@
+#!/bin/sh
+# commit-msg hook: enforce the commit message format of the harness-git skill.
+# Install in your own repository (not in a customer repository):
+#   ln -s ~/.config/agents-harness/skills/harness-git/hooks/commit-msg .git/hooks/commit-msg
+
+fail() {
+  printf 'commit-msg: %s\n' "$1" >&2
+  exit 1
+}
+
+msg=$(grep -v '^#' "$1")
+title=$(printf '%s\n' "$msg" | sed -n '1p')
+
+# Commits that Git or a rebase generates keep their own format.
+case "$title" in
+  'Merge '* | 'Revert "'* | 'fixup! '* | 'squash! '* | 'amend! '*) exit 0 ;;
+esac
+
+printf '%s\n' "$title" | grep -Eq '^(feat|fix|refactor|chore|docs|test|perf|build|ci|style): [^ ]' ||
+  fail "title must be 'type: summary'. Types: feat fix refactor chore docs test perf build ci style"
+
+case "$msg" in
+  *'\n'*) fail 'message contains an escaped \n. Write real line breaks and use git commit -F <file>' ;;
+esac
+
+for section in 'WHAT WE DID:' 'WHY WE DID THIS:' 'VERIFICATION:'; do
+  printf '%s\n' "$msg" | grep -qxF "$section" || fail "missing section: $section"
+done
+
+last=$(printf '%s\n' "$msg" | sed '/^[[:space:]]*$/d' | tail -n 1)
+case "$last" in
+  *'...' | *'…') fail 'message ends with "...". Finish the message' ;;
+esac
+
+exit 0

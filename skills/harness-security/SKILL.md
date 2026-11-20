@@ -1,3 +1,8 @@
+---
+name: harness-security
+description: Use when code handles user input, files, paths, secrets, auth, SQL, shell commands, deserialization, or network calls.
+---
+
 # Security
 
 ## Input and trust boundaries
