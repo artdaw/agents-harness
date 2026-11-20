@@ -27,7 +27,7 @@ You install it one time. After that, every agent session follows the same rules.
 
 ## Quick start
 
-1. **Install** one time per machine. See [Install](#install).
+1. **Install** one time per machine, with one command. See [Install](#install).
 2. **Set up each project** one time:
    ```sh
    cd my-project
@@ -44,40 +44,26 @@ At the end of each task, read the final report. It tells you what changed, which
 
 ## Install
 
-Requirements:
+Requirements: macOS or Linux, Git, and Claude Code or OpenCode (or both).
+`project-init` has two versions with the same behavior: fish (3.5 or later) and bash (3.2 or later, so the macOS `/bin/bash` works).
+Optional: [ripgrep](https://github.com/BurntSushi/ripgrep) and [fff](https://github.com/magnusmalm/fff-cli) for search, and [RTK](https://github.com/rtk-ai/rtk) for shorter command output.
 
-- macOS or Linux, and Git.
-- [fish](https://fishshell.com/) 3.5 or later. Only `project-init` needs fish. You can call `project-init` from any shell.
-- Claude Code, OpenCode, or both.
-- Optional: [ripgrep](https://github.com/BurntSushi/ripgrep) and [fff](https://github.com/magnusmalm/fff-cli) for search, and [RTK](https://github.com/rtk-ai/rtk) for shorter command output.
-
-Run these commands one time. They work in fish, bash, and zsh.
+Run one command, in any shell:
 
 ```sh
-# 1. Get the repository. Any location is fine.
-git clone git@github.com:artdaw/agents-harness.git ~/src/agents-harness
-
-# 2. Make one fixed path. The rules, the skills, and both runtimes use this path.
-ln -sfn ~/src/agents-harness ~/.config/agents-harness
-
-# 3. Core rules.
-mkdir -p ~/.claude ~/.config/opencode
-grep -qF '@~/.config/agents-harness/AGENTS.md' ~/.claude/CLAUDE.md 2>/dev/null \
-  || echo '@~/.config/agents-harness/AGENTS.md' >> ~/.claude/CLAUDE.md        # Claude Code
-ln -sfn ~/.config/agents-harness/AGENTS.md ~/.config/opencode/AGENTS.md      # OpenCode
-
-# 4. Skills. Run this line again after you add or pull a new skill.
-mkdir -p ~/.claude/skills ~/.config/opencode/skills
-ln -sfn ~/.config/agents-harness/skills/* ~/.claude/skills/
-ln -sfn ~/.config/agents-harness/skills/* ~/.config/opencode/skills/
-
-# 5. The project setup command.
-mkdir -p ~/.local/bin
-ln -sfn ~/.config/agents-harness/bin/project-init.fish ~/.local/bin/project-init
+git clone git@github.com:artdaw/agents-harness.git ~/src/agents-harness && ~/src/agents-harness/bin/install.sh
 ```
 
-Make sure that `~/.local/bin` is in your `PATH`.
-If `~/.config/opencode/AGENTS.md` already exists as a normal file, step 3 does not replace it. Merge it by hand.
+You can clone to any directory. `bin/install.sh`:
+
+- Links `~/.config/agents-harness` to the checkout. The rules and skills use this fixed path.
+- Adds `@~/.config/agents-harness/AGENTS.md` to `~/.claude/CLAUDE.md` (Claude Code), one time only.
+- Links `~/.config/opencode/AGENTS.md` (OpenCode).
+- Links each skill into `~/.claude/skills/` and `~/.config/opencode/skills/`, and removes links to skills that no longer exist.
+- Links `~/.local/bin/project-init` to the fish version if fish is installed, otherwise to the bash version.
+- Warns if `~/.local/bin` is not in `PATH`.
+
+It is safe to run again. It replaces only symlinks. If a real file is in the way (for example your own `~/.config/opencode/AGENTS.md`), it skips that file and prints a warning.
 
 ### Check the install
 
@@ -88,13 +74,10 @@ If `~/.config/opencode/AGENTS.md` already exists as a normal file, step 3 does n
 ### Update
 
 ```sh
-git -C ~/.config/agents-harness pull
-ln -sfn ~/.config/agents-harness/skills/* ~/.claude/skills/
-ln -sfn ~/.config/agents-harness/skills/* ~/.config/opencode/skills/
+git -C ~/.config/agents-harness pull && ~/.config/agents-harness/bin/install.sh
 ```
 
-Everything is a symlink to the repository. A change applies in the next agent session.
-To pick up new stack sections or technology lines in a project, run `project-init` in that project again.
+Rule changes apply in the next agent session. To pick up new stack sections or technology lines in a project, run `project-init` in that project again.
 
 ### Uninstall
 
@@ -246,6 +229,24 @@ Language: all reports use [ASD-STE100](https://www.asd-ste100.org/) style. Short
 | `harness-refactor` | The task asks for a refactor. |
 | `harness-sdd` | New feature, public API, schema, persistence, or architecture change. |
 | `harness-review` | Before the final report. |
+| `harness-presentation` | A presentation, slide deck, report page, or data chart for people. Applies Edward Tufte's rules and a defined brand. |
+
+### Presentations
+
+`harness-presentation` works in this order: find the brand, write the argument, build the slides, check them.
+
+- **Brand:** the skill stops if the project has no brand file, template, or design tokens. Copy `skills/harness-presentation/brand-template.md` to `brand.md` in the project and fill it in.
+- **Tufte rules:** sentence titles, no nested bullets, numbers with units and comparisons, source lines, and the per-graphic checklist in `skills/harness-presentation/tufte-checklist.md` (lie factor, data-ink, direct labels, small multiples, tables for few numbers).
+- **File creation:** the skill uses other skills when they are installed:
+
+| Skill | Source | Used for |
+| --- | --- | --- |
+| `pptx` | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/pptx) | Creating and editing `.pptx` files, brand templates, and the visual check (render every slide). |
+| `theme-factory` | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/theme-factory) | A theme when there is no brand yet. The user confirms it, and it is saved as `brand.md`. |
+| `dataviz` | Claude Code built-in, if available | Chart marks and color checks. The brand palette replaces its default palette. |
+
+In Claude Code on claude.ai accounts, `pptx` is often already available. For OpenCode, or if it is missing, copy the skill folders from [anthropics/skills](https://github.com/anthropics/skills) into `~/.claude/skills/`. Read the `LICENSE.txt` in each folder first.
+Do not use the `brand-guidelines` skill from that repository for other brands. It contains only the Anthropic brand.
 
 ### Technology skills
 
@@ -316,7 +317,7 @@ The provider check depends on the agent. The real control is the runtime and mod
 Send this text to a teammate:
 
 > We use agents-harness for Claude Code and OpenCode. It makes the agent keep changes small, run the real checks, and report honestly what it did and did not verify.
-> Setup takes five minutes: follow the Install section in the README. Then run `project-init` one time in each repository.
+> Setup is one command: see the Install section in the README. Then run `project-init` one time in each repository.
 > After that, work as usual. The rules load automatically. Read the final report at the end of each task, especially VERIFICATION and DECISIONS.
 > In a customer repository, run `project-init --client "<name>" --provider <provider>` and fill in `ENGAGEMENT.md` before the first task. The agent stops if the model is not allowed.
 
@@ -336,14 +337,15 @@ Rules are software. They can be wrong, outdated, or contradictory.
 2. Run the scenarios in `evals/evals.md` on each model that you use. Record task, model, pass or fail.
 3. Add a rule only when it prevents a mistake that you saw. A rule that changes no agent behavior is decoration.
 4. Keep `AGENTS.md` short. Move a procedure into a skill. Keep a rule in the core only if it must apply to every task.
+5. After a change to `project-init`, change both `bin/project-init.fish` and `bin/project-init.bash`. Then run `bin/test-project-init.sh` and `bin/test-project-init.sh /bin/bash`. Both must print only `ok` lines.
 
 ### Add a technology skill
 
 1. Create `skills/harness-<name>/SKILL.md` with `name:` and `description:` frontmatter. The description says when to load it.
 2. Add the skill name to the technology list in the "Skills" section of `AGENTS.md`.
-3. Add the name, label, and detection pattern to `TECH_NAMES`, `TECH_LABELS`, and `TECH_PATTERNS` in `bin/project-init.fish`.
+3. Add the name, label, and detection pattern to `TECH_NAMES`, `TECH_LABELS`, and `TECH_PATTERNS` in `bin/project-init.fish` and `bin/project-init.bash`. Run `bin/test-project-init.sh`.
 4. Add a row to the technology skills table in this README, and an invocation case to `evals/evals.md`.
-5. Run the skill link commands from [Update](#update).
+5. Run `bin/install.sh` again to link the new skill.
 
 ---
 
@@ -353,7 +355,10 @@ Rules are software. They can be wrong, outdated, or contradictory.
 AGENTS.md              core rules, always loaded
 skills/harness-*/      process and technology skills (SKILL.md, plus hooks/ for harness-git)
 stacks/                stack sections for project-init
-bin/project-init.fish  project setup
+bin/install.sh         one-command install and update
+bin/project-init.fish  project setup (fish)
+bin/project-init.bash  project setup (bash), same behavior
+bin/test-project-init.sh  compares the fish and bash versions
 evals/evals.md         test scenarios for rule changes
 ```
 
