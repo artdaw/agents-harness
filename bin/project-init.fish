@@ -212,7 +212,7 @@ if not set -q SELECTED[1]
     set -q tf_files[1]; and add_stack terraform
     set -l docker_files Dockerfile *.Dockerfile compose.yaml compose.yml docker-compose.yaml docker-compose.yml
     test (count (path filter -f $docker_files)) -gt 0; and add_stack docker
-    if test (count (path filter -f .sqlfluff flyway.toml flyway.conf liquibase.properties alembic.ini)) -gt 0; or test -d migrations
+    if test (count (path filter -f .sqlfluff flyway.toml flyway.conf liquibase.properties alembic.ini schema.prisma)) -gt 0; or test -d migrations; or test -d prisma
         add_stack sql
     end
 
@@ -242,6 +242,11 @@ if set -q manifests[1]
         test -n "$TECH_PATTERNS[$i]"; or continue
         printf '%s\n' $deps | grep -qiE -- $TECH_PATTERNS[$i]; and add_tech $TECH_NAMES[$i]
     end
+end
+# Prisma: read only the datasource provider line. Model names and comments are not dependencies.
+set -l prisma_files schema.prisma prisma/schema.prisma prisma/schema/*.prisma
+for f in (path filter -f $prisma_files)
+    grep -qE '^[[:space:]]*provider[[:space:]]*=[[:space:]]*"postgres(ql)?"' $f; and add_tech postgres
 end
 test -f tsconfig.json; and add_tech typescript
 if test (count (path filter -f Chart.yaml kustomization.yaml kustomization.yml skaffold.yaml)) -gt 0

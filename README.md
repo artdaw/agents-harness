@@ -454,7 +454,7 @@ Do not use the `brand-guidelines` skill from that repository for other brands. I
 
 | Skill | Loads when | `project-init` detects it from |
 | --- | --- | --- |
-| `harness-postgres` | PostgreSQL schema, queries, indexes, or `psql`. | `pg`, `psycopg`, `asyncpg`, `pgx`, `lib/pq`, a `postgres` image |
+| `harness-postgres` | PostgreSQL schema, queries, indexes, or `psql`. | `pg`, `psycopg`, `asyncpg`, `pgx`, `lib/pq`, a `postgres` image, `provider = "postgresql"` in a Prisma schema |
 | `harness-temporal` | Temporal workflows, activities, workers, or the `temporal` CLI. | `temporalio`, `go.temporal.io`, `io.temporal` |
 | `harness-kafka` | Kafka producers, consumers, topics, or schemas. | `kafka`, `sarama` |
 | `harness-redis` | Redis or Valkey: cache, locks, queues, pub/sub, streams. | `redis`, `valkey` |
@@ -466,7 +466,7 @@ Do not use the `brand-guidelines` skill from that repository for other brands. I
 | `harness-tailwind` | Tailwind classes, theme tokens, or config. | `tailwindcss` |
 | `harness-tanstack` | TanStack Query, Router, Start, Table, Form, or Virtual. | `@tanstack/` |
 
-Detection reads `package.json`, `pyproject.toml`, `requirements*.txt`, `go.mod` (without `// indirect` lines), Maven and Gradle files, and Compose files. It does not read lockfiles.
+Detection reads `package.json`, `pyproject.toml`, `requirements*.txt`, `go.mod` (without `// indirect` lines), Maven and Gradle files, Compose files, and Prisma schemas. It does not read lockfiles.
 
 The `harness-` prefix prevents name conflicts with other installed skills.
 If a runtime cannot load skills, the agent reads `~/.config/agents-harness/skills/<name>/SKILL.md`.
@@ -495,7 +495,7 @@ A stack section is a short block of commands and hard rules for one language or 
 | Web | `astro.config.*`, `vite.config.*` | Astro, React, Tailwind v4. Accessibility. |
 | Terraform | `*.tf` | `plan` only. Never `apply`, `destroy`, or state commands. Commit the lock file. |
 | Docker | `Dockerfile`, `compose.yaml` | Multi-stage, non-root, pinned base images, secrets with `--mount=type=secret`. Never push. |
-| SQL | `.sqlfluff`, `flyway.toml`, `alembic.ini`, `migrations/` | Migrations on local or test databases only. Expand and contract for breaking changes. |
+| SQL | `.sqlfluff`, `flyway.toml`, `alembic.ini`, `migrations/`, `schema.prisma`, `prisma/` | Migrations on local or test databases only. Expand and contract for breaking changes. Prisma: `migrate dev --create-only`, no `migrate reset` or `db push` on shared databases. |
 
 In customer mode, the customer conventions win. The agent uses the stack checks only with the tools that the project already uses.
 
