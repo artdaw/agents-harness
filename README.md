@@ -233,6 +233,8 @@ Language: all reports use [ASD-STE100](https://www.asd-ste100.org/) style. Short
 | `harness-deps` | A dependency is added or upgraded. |
 | `harness-security` | Code handles input, files, secrets, auth, SQL, shell, or network. |
 | `harness-refactor` | The task asks for a refactor. |
+| `harness-loop` | Work repeats without a human prompt for each step: `/loop`, a schedule, a retry loop. Requires a stop check (a command), a budget, and failure classes. A pending result is not a failure. Stops on the same error twice. |
+| `harness-graph` | More than one agent changes files for the task: subagents that write, parallel sessions. One orchestrator, disjoint file ownership, one worktree per writer. Merges one result at a time, and only if the task allows merges. |
 | `harness-sdd` | New feature, public API, schema, persistence, or architecture change. |
 | `harness-review` | Before the final report. Runs an independent verifier in a fresh subagent. The verifier tries to reject the change. |
 | `harness-presentation` | A presentation, slide deck, report page, or data chart for people. Applies Edward Tufte's rules and a defined brand. |

@@ -1,4 +1,4 @@
-# Harness controls: contract, state, independent verifier, enforced deny list
+# Harness controls: contract, state, verifier, deny list, loops, graphs
 
 ## Source
 
@@ -17,7 +17,8 @@ Its checklist has ten questions. This spec maps each one to the harness.
 | Does completion require evidence? | VERIFICATION lists commands with exit codes. | Covered. |
 | Is the checking done by something other than the builder? | `harness-review` is a self-review. | Gap. Add an independent verifier. |
 | Are risky actions blocked by policy, not by a sentence? | `AGENTS.md` says "Dangerous commands are blocked by config". The repository ships no config. | Gap. Ship a deny list. |
-| Does every loop have a retry cap and a budget? | 3 attempts. No repeat without new evidence. | Covered. |
+| Does every loop have a retry cap and a budget? | 3 attempts per problem. No stop check, budget, or failure classes for repeating or unattended runs. | Gap. Add `harness-loop`. |
+| Do several agents coordinate? (article: graph layer) | No rules. The harness assumes one agent. | Gap. Add `harness-graph`. |
 | Can the run resume after a crash? | No. | Gap. The state file covers it. |
 | Does each failure leave a rule, a test, or a check behind? | "Add a rule only when it prevents a mistake that you saw." No path from a rule to a check. | Gap. Add the enforcement ladder to the README. |
 
@@ -39,6 +40,14 @@ Its checklist has ten questions. This spec maps each one to the harness.
    Otherwise it prints a warning to merge the rules by hand.
    A deny rule matches the start of a command only. It stops mistakes, not an attacker.
 
+5. Loops (`harness-loop`). Repeating or unattended work needs a loop contract in the state file before the first iteration:
+   trigger, scope, stop check (a command), budget, escalation. No stop check or no budget: no loop.
+   Each failure is classified. A pending result uses the time budget, not the attempt limit. The same error twice with no change stops the loop.
+6. Graphs (`harness-graph`). More than one agent needs a graph design in the state file:
+   one orchestrator, workers with disjoint file ownership and one worktree per writer, a separate verifier.
+   Workers do not start agents, talk to each other, merge, or push. The orchestrator merges one result at a time with checks, only if the task allows merges.
+   Otherwise it reports the worker branches. The `harness-review` verifier alone does not load this skill.
+
 ## Acceptance criteria
 
 - `AGENTS.md` stays under 200 lines.
@@ -47,12 +56,14 @@ Its checklist has ten questions. This spec maps each one to the harness.
 - `bin/install.sh` with a different `~/.claude/settings.json` does not change it and prints a warning.
 - The deny list contains only commands that existing rules forbid. Read-only commands such as `terraform state list` stay allowed.
 - `config/claude-settings.json` is valid JSON.
-- `evals/evals.md` has a scenario for each new behavior.
+- `evals/evals.md` has a scenario for each new behavior, including loops (25 to 27) and graphs (28, 29).
+- `AGENTS.md` names `harness-loop` and `harness-graph` with a load condition.
 
 ## Assumptions
 
 - The article does not name its author's runtime config. Deny rules use the Claude Code `permissions.deny` format.
 - No OpenCode permission file. The OpenCode documentation was not reachable, so the format is not verified.
 - No change to `project-init`. The agent excludes `.agent/` itself. This keeps both scripts unchanged.
-- No new retry rule. "Do not repeat a failed attempt without new evidence" and the limit of 3 already match the article.
+- The core retry rule stays. `harness-loop` adds the loop-level rules: stop check, budget, failure classes.
+- Loops and graphs are skills, not core rules. Most tasks use one agent once. The skills load only when the condition is true.
 - The contract lives in the state file or in the first message. No separate contract file.

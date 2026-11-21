@@ -167,6 +167,8 @@ If your runtime cannot load skills, read `~/.config/agents-harness/skills/<name>
 - New dependency or dependency upgrade: `harness-deps`.
 - Code that handles input, files, secrets, auth, SQL, shell, or network: `harness-security`.
 - Task that asks for a refactor: `harness-refactor`.
+- Work that repeats without a human prompt for each step (`/loop`, schedule, unattended retry loop): `harness-loop`.
+- More than one agent changes files for the same task (the review verifier alone does not count): `harness-graph`.
 - Before the final report: `harness-review`.
 - Presentation, slide deck, report page, or data chart for people: `harness-presentation`.
 - Work with one of these technologies: its skill.
