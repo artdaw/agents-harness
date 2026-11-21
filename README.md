@@ -334,9 +334,41 @@ It then merges one branch at a time, runs the checks after each merge, and stops
 
 ### Step 6. Check that it works
 
-- Try a forbidden command: ask the agent to run `git reset --hard`. Claude Code blocks it. The agent reports the block.
+- Try a forbidden command: ask the agent to run `git reset --hard`. Claude Code blocks it. The agent reports the block. OpenCode has no harness deny list yet: see [Models and runtimes](#models-and-runtimes).
 - Interrupt a long task, start a new session, and type "continue". The agent reads `.agent/STATE.md` and continues at the next step.
 - Run the scenarios in `evals/evals.md`, for example 25 to 29 for loops and graphs. Record pass or fail for each model.
+
+### Step 7. Let the rules improve
+
+Each final report has a LESSONS list. It names each mistake from the task that a rule or check could prevent, with a proposed rule.
+The agent does not change the rules by itself. You decide:
+
+```text
+Apply lesson 1 from the last report.
+```
+
+Or, in a PR review, ask for it in a comment. How the comment reaches the agent depends on the runtime:
+
+- Claude Code: install the Claude Code GitHub Action in the repository (`/install-github-action`). Then comment:
+  ```text
+  @claude add to AGENTS.md: UI code never imports from src/data/. Use src/services/.
+  ```
+- OpenCode: copy the comment into an OpenCode session and write "Apply this lesson". You start the task, so no write-access check is needed.
+  To automate it, run OpenCode from a GitHub Actions workflow on PR comments, or use the OpenCode GitHub integration. Check the OpenCode docs for its setup.
+  The workflow must start the agent only when `github.event.comment.author_association` is `OWNER`, `MEMBER`, or `COLLABORATOR`.
+
+The agent loads `harness-lessons`. It checks for an existing rule, picks the level, and makes one commit. The incident goes in the commit message.
+A first incident becomes a rule or a checklist line. If the mistake comes back, the rule moves one level down: rule, then checklist line, then automated check (for example a lint rule that fails the build), then deny rule.
+Before it adds a lint rule, the agent runs it on the current code. If the code already breaks it, the agent reports the files and does not rewrite them.
+Only the person who started the task, or a reviewer with write access who tags the agent, can ask for a lesson.
+
+After a model upgrade, prune the rules:
+
+```text
+Review the rules in AGENTS.md. Prune the ones that the evals show are no longer needed.
+```
+
+The agent removes one rule at a time in a branch, runs its eval scenarios on each model, and reports the result. You decide what to remove.
 
 ---
 
@@ -376,7 +408,7 @@ In summary:
 - **Ponytail ladder:** do not build it, reuse code, use the standard library, use the platform, use an installed dependency, write one line, write the minimum. Stop at the first step that works.
 - **Testing:** each behavior change gets the smallest check that fails when the logic breaks.
 - **Failure recovery:** read the error, find the root cause, fix, check again. Stop after 3 failed attempts and report the evidence.
-- **Final report:** STATUS, ACTION, RESULT, VERIFICATION, RISK, NEXT ACTION, and DECISIONS. VERIFICATION lists only commands that ran, with exit codes.
+- **Final report:** STATUS, ACTION, RESULT, VERIFICATION, RISK, NEXT ACTION, DECISIONS, and LESSONS. VERIFICATION lists only commands that ran, with exit codes. LESSONS proposes rules; a human decides.
 
 Language: all reports use [ASD-STE100](https://www.asd-ste100.org/) style. Short sentences, active voice, one idea per sentence.
 
@@ -397,6 +429,7 @@ Language: all reports use [ASD-STE100](https://www.asd-ste100.org/) style. Short
 | `harness-loop` | Work repeats without a human prompt for each step: `/loop`, a schedule, a retry loop. Requires a stop check (a command), a budget, and failure classes. A pending result is not a failure. Stops on the same error twice. |
 | `harness-graph` | More than one agent changes files for the task: subagents that write, parallel sessions. One orchestrator, disjoint file ownership, one worktree per writer. Merges one result at a time, and only if the task allows merges. |
 | `harness-sdd` | New feature, public API, schema, persistence, or architecture change. |
+| `harness-lessons` | A task or a review comment asks to add a lesson or a rule, or a task asks to prune the rules. Turns one incident into a rule or checklist line, and moves it down to an automated check or deny rule when the mistake comes back. Prune mode removes rules that the evals show are no longer needed. |
 | `harness-review` | Before the final report. Runs an independent verifier in a fresh subagent. The verifier tries to reject the change. |
 | `harness-presentation` | A presentation, slide deck, report page, or data chart for people. Applies Edward Tufte's rules and a defined brand. |
 
@@ -479,6 +512,14 @@ The rules do not depend on a model.
 If a customer allows only OpenAI, use OpenCode.
 The provider check depends on the agent. The real control is the runtime and model that you start.
 
+The rules and skills work the same in both runtimes. Three parts differ:
+
+| Part | Claude Code | OpenCode |
+| --- | --- | --- |
+| Deny list | `config/claude-settings.json`, copied by `install.sh`. The runtime blocks the command. | Not shipped. The OpenCode permission format is not verified yet. Forbidden commands are blocked only by the rules text. |
+| Loops | `/loop` with an interval | Start the loop prompt from a scheduler, for example cron or CI. The loop contract in `harness-loop` is the same. |
+| Lessons from PR comments | `@claude` with the Claude Code GitHub Action | Copy the comment into a session, or run OpenCode from a CI workflow that checks `author_association`. See Step 7 of the full example. |
+
 ---
 
 ## Explain it to your team
@@ -506,7 +547,7 @@ Rules are software. They can be wrong, outdated, or contradictory.
 2. Run the scenarios in `evals/evals.md` on each model that you use. Record task, model, pass or fail.
 3. Add a rule only when it prevents a mistake that you saw. A rule that changes no agent behavior is decoration.
    When the same mistake comes back, move it one step down: rule, then checklist in a skill, then automated check (test, lint, hook), then deny rule.
-   Remove a rule when the models no longer need it.
+   Remove a rule when the models no longer need it. The `harness-lessons` skill does both: it adds lessons and prunes rules.
 4. Keep `AGENTS.md` short. Move a procedure into a skill. Keep a rule in the core only if it must apply to every task.
 5. After a change to `project-init`, change both `bin/project-init.fish` and `bin/project-init.bash`. Then run `bin/test-project-init.sh` and `bin/test-project-init.sh /bin/bash`. Both must print only `ok` lines.
 

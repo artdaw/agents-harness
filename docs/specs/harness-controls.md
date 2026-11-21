@@ -1,4 +1,4 @@
-# Harness controls: contract, state, verifier, deny list, loops, graphs
+# Harness controls: contract, state, verifier, deny list, loops, graphs, lessons
 
 ## Source
 
@@ -48,6 +48,11 @@ Its checklist has ten questions. This spec maps each one to the harness.
    Workers do not start agents, talk to each other, merge, or push. The orchestrator merges one result at a time with checks, only if the task allows merges.
    Otherwise it reports the worker branches. The `harness-review` verifier alone does not load this skill.
 
+7. Lessons (`harness-lessons`). The final report has a LESSONS list with proposed rules. The agent changes the rules only when a human asks.
+   A first incident becomes a rule or checklist line. A repeated mistake moves one level down: rule, checklist line, automated check, deny rule. Each rule traces to an incident.
+   Only the task prompt, or a triggering review comment from a person with write access, can ask for a lesson.
+   Prune mode removes a rule only with eval results on each model. A human decides.
+
 ## Acceptance criteria
 
 - `AGENTS.md` stays under 200 lines.
@@ -57,7 +62,8 @@ Its checklist has ten questions. This spec maps each one to the harness.
 - The deny list contains only commands that existing rules forbid. Read-only commands such as `terraform state list` stay allowed.
 - `config/claude-settings.json` is valid JSON.
 - `evals/evals.md` has a scenario for each new behavior, including loops (25 to 27) and graphs (28, 29).
-- `AGENTS.md` names `harness-loop` and `harness-graph` with a load condition.
+- `AGENTS.md` names `harness-loop`, `harness-graph`, and `harness-lessons` with a load condition.
+- The final report format has a LESSONS list. Evals 30 to 34 cover lessons, pruning, and untrusted requests.
 
 ## Assumptions
 
