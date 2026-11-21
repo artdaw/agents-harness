@@ -293,7 +293,7 @@ if [ ${#SELECTED[@]} -eq 0 ]; then
     tf_files=(*.tf)
     [ ${#tf_files[@]} -gt 0 ] && add_stack terraform
     any_file Dockerfile ./*.Dockerfile compose.yaml compose.yml docker-compose.yaml docker-compose.yml && add_stack docker
-    if any_file .sqlfluff flyway.toml flyway.conf liquibase.properties alembic.ini || [ -d migrations ]; then
+    if any_file .sqlfluff flyway.toml flyway.conf liquibase.properties alembic.ini schema.prisma || any_dir migrations prisma; then
         add_stack sql
     fi
 
@@ -325,6 +325,10 @@ if [ ${#manifests[@]} -gt 0 ]; then
         printf '%s\n' "$deps" | grep -qiE -- "${TECH_PATTERNS[$i]}" && add_tech "${TECH_NAMES[$i]}"
     done
 fi
+# Prisma: read only the datasource provider line. Model names and comments are not dependencies.
+for f in schema.prisma prisma/schema.prisma prisma/schema/*.prisma; do
+    [ -f "$f" ] && grep -qE '^[[:space:]]*provider[[:space:]]*=[[:space:]]*"postgres(ql)?"' "$f" && add_tech postgres
+done
 [ -f tsconfig.json ] && add_tech typescript
 if any_file Chart.yaml kustomization.yaml kustomization.yml skaffold.yaml || any_dir k8s kubernetes helm charts; then
     add_tech kubernetes

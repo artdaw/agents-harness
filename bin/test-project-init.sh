@@ -32,6 +32,15 @@ fx_mixed() {
     mkdir migrations k8s
     echo 'langchain>=1' >requirements.txt
 }
+fx_prisma() {
+    echo '{"devDependencies":{"prisma":"6"}}' >package.json
+    mkdir prisma
+    printf 'datasource db {\n  provider = "postgresql"\n  url      = env("DATABASE_URL")\n}\n' >prisma/schema.prisma
+}
+fx_prisma_mysql() {
+    mkdir prisma
+    printf '// Moved from Postgres in 2024\ndatasource db {\n  provider = "mysql"\n  url      = env("POSTGRES_URL")\n}\nmodel KafkaOffset {\n  redisKey String @id\n}\n' >prisma/schema.prisma
+}
 fx_client() { git init -q; echo '{"dependencies":{"kafkajs":"2"}}' >package.json; }
 fx_symlink() { echo '{"dependencies":{"react":"19"}}' >package.json; echo shared >"$T/shared.md"; ln -s "$T/shared.md" AGENTS.md; }
 fx_existing() { git init -q; printf '# Mine\n' >AGENTS.md; printf 'node_modules/\n' >.gitignore; echo '{}' >package.json; }
@@ -82,6 +91,8 @@ check 'no stack' fx_empty
 check 'detect node, web, docker, tech skills' fx_node
 check 'go with indirect dependency' fx_go
 check 'detect python, terraform, docker, sql' fx_mixed
+check 'detect prisma: sql stack and postgres' fx_prisma
+check 'prisma mysql: no postgres, kafka, or redis from names and comments' fx_prisma_mysql
 check 'explicit stacks' fx_empty --go --web --sql
 check 'customer mode' fx_client --client Acme --provider 'anthropic, openai'
 check 'customer mode, provider placeholder' fx_client --client=Acme

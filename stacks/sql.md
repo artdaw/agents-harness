@@ -12,10 +12,20 @@ Applies to SQL files and to the migration tool of the project (Flyway, Liquibase
   4. Contract: remove the old column in a later release.
 - PostgreSQL:
   - Use `CREATE INDEX CONCURRENTLY` and `DROP INDEX CONCURRENTLY`. They cannot run in a transaction.
-    Mark the migration as non-transactional in the tool.
+    Mark the migration as non-transactional in the tool. Prisma has no marker: see the Prisma rules below.
   - Add a foreign key or check with `NOT VALID`. Run `VALIDATE CONSTRAINT` in a separate migration.
   - Set `lock_timeout` in migrations that take locks.
   - Lint migrations with `squawk` if it is installed.
+- Prisma (`schema.prisma`, `prisma/`). Run the CLI through the project package manager, for example `pnpm exec prisma`.
+  - Checks: `prisma validate` and `prisma format --check`. Run `prisma generate` after each schema change.
+  - Create a migration with `prisma migrate dev --create-only`. Read the SQL before you apply it.
+    Edit the SQL there for `NOT VALID` or a data step. The schema file cannot express these.
+  - Prisma has no non-transactional marker. PostgreSQL runs a multi-statement migration file in one transaction.
+    Put each `CREATE INDEX CONCURRENTLY` alone in its own migration file. Remove the plain `CREATE INDEX` from the other file.
+    Do not add `SET lock_timeout` or any other statement to that file.
+  - Run `prisma migrate dev` only against a local database. It can ask to reset the database when it finds drift.
+  - Never run `prisma migrate reset` or `prisma db push` against a shared database. `db push` skips the migration files.
+  - Do not run `prisma migrate deploy` yourself. Write it in the report for the environment owner.
 - Lint: `sqlfluff lint` if `.sqlfluff` exists.
 - Queries: use parameters. Never build SQL with string concatenation. Select named columns in application code, not `*`.
 - Check a new query on a large table with `EXPLAIN`. Do not run `EXPLAIN ANALYZE` on production: it runs the query.
