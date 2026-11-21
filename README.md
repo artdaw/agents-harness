@@ -40,6 +40,8 @@ You install it one time. After that, every agent session follows the same rules.
 
 At the end of each task, read the final report. It tells you what changed, which checks ran, and which decisions the agent made for you.
 
+For a complete walkthrough with a single task, a loop, and a graph of agents, see [Full example](#full-example-from-install-to-loops-and-graphs).
+
 ---
 
 ## Install
@@ -176,6 +178,165 @@ If a check did not run, the report says "not run". It never shows a check as pas
 | `--agents`, `-a` | Creates a `.agents` link to the harness in the project and excludes it from Git. |
 
 Technology skills are always detected. The script is safe to run again: it keeps existing files and adds only missing sections and lines.
+
+---
+
+## Full example: from install to loops and graphs
+
+This example uses a sample repository `shop` with two parts: `api/` (Node) and `web/` (React).
+It goes through the three levels of work: one task, a loop, and a graph of agents.
+Start at level 1. Use a loop or a graph only when the task needs it.
+
+### Step 1. Install the harness (one time per machine)
+
+```sh
+git clone git@github.com:artdaw/agents-harness.git ~/src/agents-harness && ~/src/agents-harness/bin/install.sh
+```
+
+Check the result:
+
+```sh
+ls ~/.claude/skills | grep -E 'harness-(loop|graph|review)'   # the skills are linked
+grep -c '"deny"' ~/.claude/settings.json                       # 1: the deny list is installed
+```
+
+If you already had `~/.claude/settings.json`, the script printed a warning and did not change it.
+Copy the `permissions` block from `config/claude-settings.json` into your file by hand.
+
+### Step 2. Set up the project (one time per repository)
+
+```sh
+cd ~/src/shop
+project-init                      # in the root
+(cd api && project-init)          # each part with its own manifest
+(cd web && project-init)
+```
+
+Fill in the placeholders in each `AGENTS.md`. The most important one is the check command.
+The agents use it as the definition of "done". A good check command is one script that fails on any problem:
+
+```sh
+#!/usr/bin/env bash
+# check.sh: exit code 0 only when everything passes
+set -e
+pnpm -C api typecheck && pnpm -C api lint && pnpm -C api test
+pnpm -C web typecheck && pnpm -C web lint && pnpm -C web test
+echo "GATE: PASS"
+```
+
+Then write the check command in the project `AGENTS.md`, for example: `Full check: ./check.sh`.
+
+### Step 3. Level 1: one task
+
+Start `claude` (or `opencode`) in `~/src/shop` and give a normal task:
+
+```text
+Fix the wrong total in the cart when a coupon is applied.
+```
+
+You do not mention the rules. The agent:
+
+1. Writes a task contract before the first edit:
+   ```text
+   Goal:        Cart total is correct with a coupon.
+   Constraints: No change to the coupon API. No new dependency.
+   Done when:   - a new test for a cart with a coupon fails before the fix and passes after it
+                - ./check.sh prints GATE: PASS
+   If blocked:  stop and report what was tried.
+   ```
+2. Loads `harness-debug`, reproduces the bug, and fixes the root cause.
+3. Loads `harness-review`. A fresh verifier subagent tries to reject the change.
+4. Ends with the final report: VERIFICATION with exit codes, and DECISIONS.
+
+### Step 4. Level 2: a loop
+
+Use a loop when work repeats without you: wait for a deploy, keep a branch green, process a queue.
+The loop needs two things before it starts: a stop check (a command) and a budget.
+If you leave them out, the agent asks for them in its report and does not start.
+
+In Claude Code, use `/loop` with an interval. With no interval, the model sets the pace:
+
+```text
+/loop 15m Keep the branch fix/cart-total green.
+Stop check: ./check.sh exits 0.
+Pending: CI shows "queued" or "in progress".
+Budget: 3 attempts per failure, 2 hours in total.
+Escalation: write the report in .agent/STATE.md and stop.
+```
+
+In other runtimes, start the same prompt from your scheduler. The loop contract is the same.
+
+The agent loads `harness-loop` and writes the contract in `.agent/STATE.md` (not committed):
+
+```markdown
+# STATE.md
+Loop contract:
+  Trigger:     every 15 minutes
+  Scope:       one fix per iteration, only on branch fix/cart-total
+  Stop check:  ./check.sh (exit 0 = done)
+  Pending:     CI "queued" or "in progress"
+  Budget:      3 attempts per failure, 2 hours total. Used: 1 attempt, 20 minutes.
+  Escalation:  report here, then stop
+Current step:  iteration 2: web test cart.test.tsx fails
+Attempts:
+  - 1: unused import in api/src/cart.ts. Removed it. ./check.sh exit 1 (web test failed).
+Next action:   read the failing web test
+```
+
+Each iteration reads this file, does one step, runs the stop check, and updates the file.
+The loop stops when one of these happens:
+
+- the stop check passes;
+- the budget ends;
+- the same error comes back with no change;
+- the same lines are edited in 3 iterations.
+
+It never reports "done" without a passing stop check.
+
+### Step 5. Level 3: a graph of agents
+
+Use a graph when the work splits into parts with separate files and one context is not enough.
+For a small task, one agent is cheaper and safer.
+
+Give the task to one agent, the orchestrator. Name the split and say whether it can merge:
+
+```text
+Add a "saved carts" feature.
+Split it across two workers: one for api/ (endpoint and tests), one for web/ (page and tests).
+Do not merge. Report the worker branches with their check output.
+```
+
+The orchestrator loads `harness-graph` and writes the graph in `.agent/STATE.md` before it starts the workers:
+
+```markdown
+# STATE.md
+Contract:   saved carts. Done when: ./check.sh prints GATE: PASS on each branch.
+Graph:
+  Orchestrator: this session. Owns the contract, shared files, and the final report.
+  Worker api:   branch agent/saved-carts-api, own worktree. Owns api/src/carts/**, api/test/carts/**
+  Worker web:   branch agent/saved-carts-web, own worktree. Owns web/src/saved-carts/**, web/test/saved-carts/**
+  Verifier:     fresh subagent with skills/harness-review/verifier.md
+Shared files:   api/openapi.yaml, pnpm-lock.yaml. Only the orchestrator changes them.
+Limits:         2 workers, 3 attempts each
+Merge:          not allowed by the task. Report the branches.
+```
+
+Then:
+
+1. Each worker gets only its contract and its files. It returns the changed files and the commands with exit codes. It never returns only "done".
+2. The orchestrator checks that each worker changed only its own files.
+3. The checks and the verifier run on each branch.
+4. The worktrees are removed. The branches stay.
+5. The final report lists both branches and their check output, for you to merge.
+
+To let the orchestrator merge, write "You may merge into feature/saved-carts" in the task.
+It then merges one branch at a time, runs the checks after each merge, and stops on a conflict.
+
+### Step 6. Check that it works
+
+- Try a forbidden command: ask the agent to run `git reset --hard`. Claude Code blocks it. The agent reports the block.
+- Interrupt a long task, start a new session, and type "continue". The agent reads `.agent/STATE.md` and continues at the next step.
+- Run the scenarios in `evals/evals.md`, for example 25 to 29 for loops and graphs. Record pass or fail for each model.
 
 ---
 
