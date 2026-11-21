@@ -334,7 +334,7 @@ It then merges one branch at a time, runs the checks after each merge, and stops
 
 ### Step 6. Check that it works
 
-- Try a forbidden command: ask the agent to run `git reset --hard`. Claude Code blocks it. The agent reports the block.
+- Try a forbidden command: ask the agent to run `git reset --hard`. Claude Code blocks it. The agent reports the block. OpenCode has no harness deny list yet: see [Models and runtimes](#models-and-runtimes).
 - Interrupt a long task, start a new session, and type "continue". The agent reads `.agent/STATE.md` and continues at the next step.
 - Run the scenarios in `evals/evals.md`, for example 25 to 29 for loops and graphs. Record pass or fail for each model.
 
@@ -347,11 +347,15 @@ The agent does not change the rules by itself. You decide:
 Apply lesson 1 from the last report.
 ```
 
-Or, in a PR review, ask for it in a comment. This needs the Claude Code GitHub Action in the repository (`/install-github-action`):
+Or, in a PR review, ask for it in a comment. How the comment reaches the agent depends on the runtime:
 
-```text
-@claude add to AGENTS.md: UI code never imports from src/data/. Use src/services/.
-```
+- Claude Code: install the Claude Code GitHub Action in the repository (`/install-github-action`). Then comment:
+  ```text
+  @claude add to AGENTS.md: UI code never imports from src/data/. Use src/services/.
+  ```
+- OpenCode: copy the comment into an OpenCode session and write "Apply this lesson". You start the task, so no write-access check is needed.
+  To automate it, run OpenCode from a GitHub Actions workflow on PR comments, or use the OpenCode GitHub integration. Check the OpenCode docs for its setup.
+  The workflow must start the agent only when `github.event.comment.author_association` is `OWNER`, `MEMBER`, or `COLLABORATOR`.
 
 The agent loads `harness-lessons`. It checks for an existing rule, picks the level, and makes one commit. The incident goes in the commit message.
 A first incident becomes a rule or a checklist line. If the mistake comes back, the rule moves one level down: rule, then checklist line, then automated check (for example a lint rule that fails the build), then deny rule.
@@ -507,6 +511,14 @@ In customer mode, the customer conventions win. The agent uses the stack checks 
 The rules do not depend on a model.
 If a customer allows only OpenAI, use OpenCode.
 The provider check depends on the agent. The real control is the runtime and model that you start.
+
+The rules and skills work the same in both runtimes. Three parts differ:
+
+| Part | Claude Code | OpenCode |
+| --- | --- | --- |
+| Deny list | `config/claude-settings.json`, copied by `install.sh`. The runtime blocks the command. | Not shipped. The OpenCode permission format is not verified yet. Forbidden commands are blocked only by the rules text. |
+| Loops | `/loop` with an interval | Start the loop prompt from a scheduler, for example cron or CI. The loop contract in `harness-loop` is the same. |
+| Lessons from PR comments | `@claude` with the Claude Code GitHub Action | Copy the comment into a session, or run OpenCode from a CI workflow that checks `author_association`. See Step 7 of the full example. |
 
 ---
 

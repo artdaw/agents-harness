@@ -1,6 +1,6 @@
 ---
 name: harness-lessons
-description: Use when a task or a review comment asks to add a lesson or a rule ("add this to AGENTS.md", "@claude remember this"), when you apply a LESSONS item from a report, or when a task asks to prune the rules.
+description: Use when a task or a review comment asks to add a lesson or a rule ("add this to AGENTS.md"), when you apply a LESSONS item from a report, or when a task asks to prune the rules.
 ---
 
 # Lessons
