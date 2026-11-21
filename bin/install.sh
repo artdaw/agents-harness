@@ -39,6 +39,18 @@ else
 fi
 link "$HARNESS/AGENTS.md" "$HOME/.config/opencode/AGENTS.md"
 
+# 2b. Deny list for Claude Code. A copy, not a link: the user owns and edits this file.
+# Never overwrite an existing settings file.
+settings="$HOME/.claude/settings.json"
+if [ -e "$settings" ] || [ -L "$settings" ]; then
+    if ! cmp -s "$REPO/config/claude-settings.json" "$settings"; then
+        warn "$settings differs from $HARNESS/config/claude-settings.json. Check that it has the harness permissions."
+    fi
+else
+    cp "$REPO/config/claude-settings.json" "$settings"
+    echo "copied  $settings"
+fi
+
 # 3. Skills. Remove harness links whose skill no longer exists.
 for dir in "$HOME/.claude/skills" "$HOME/.config/opencode/skills"; do
     for old in "$dir"/harness-*; do

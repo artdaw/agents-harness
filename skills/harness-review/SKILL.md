@@ -1,6 +1,6 @@
 ---
 name: harness-review
-description: Use before the final report of any task that changed files. Checks scope, leftovers, correctness, and report honesty.
+description: Use before the final report of any task that changed files. Checks scope, leftovers, correctness, and report honesty, then runs an independent verifier.
 ---
 
 # Review before the final report
@@ -31,3 +31,14 @@ Run `git diff` and `git status`. Read the full diff. Answer each question.
 - Each failed or skipped check is in the report with the reason.
 
 If any answer is wrong, fix it. Then run this list again.
+
+## Independent verifier
+Skip this step for a change of 5 lines or fewer that does not change behavior, and for a change to documentation only.
+
+1. Start a fresh subagent with the brief in `verifier.md` in this skill directory.
+   Give it only the task contract, `git diff`, `git status`, and the check output with exit codes.
+2. `ACCEPT`: add `verifier: ACCEPT` to VERIFICATION, with each command that the verifier ran and its exit code.
+3. `REJECT`: this is a failed attempt. Fix the cause. Run the checks and the verifier again.
+   Follow the Failure recovery limit of 3 attempts.
+4. If the runtime cannot start a subagent, do the verifier checks yourself in a separate pass.
+   Write "verifier: same session" in the report.

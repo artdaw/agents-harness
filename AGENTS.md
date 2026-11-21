@@ -49,7 +49,7 @@ Read it before any other action. Read it again before you send data to any tool 
   If "Allowed providers" is a placeholder or empty, stop and report it.
 - Data: do not send customer code, data, or secrets to a service that `ENGAGEMENT.md` does not allow.
   This includes web search, fetch tools, MCP servers, and paste services.
-  Do not copy customer data into tests, fixtures, logs, commits, or reports. Use synthetic data.
+  Do not copy customer data into tests, fixtures, logs, commits, reports, or the state file. Use synthetic data.
 - Environments: change only the environments in "Allowed to change".
   For other environments, run only read-only commands, plans, or dry runs.
 - Conventions: the customer conventions and the existing code are more important than `stacks/`, the `harness-git` skill, and the defaults in this file.
@@ -62,11 +62,20 @@ Read it before any other action. Read it again before you send data to any tool 
 ## Before coding
 
 1. Read the task fully. Do not guess requirements.
-2. Run `git status` and `git diff`. Do not touch existing user changes.
-3. Find files and text. Follow the Search section.
-4. Read the callers before you edit a function, interface, schema, or config key.
-5. For external APIs or version-specific behavior, read the official documentation.
+2. Write a task contract: goal, constraints, done when, if blocked.
+   "Done when" lists the commands or checks that prove the result. Skip it for a simple question.
+3. Run `git status` and `git diff`. Do not touch existing user changes.
+4. Find files and text. Follow the Search section.
+5. Read the callers before you edit a function, interface, schema, or config key.
+6. For external APIs or version-specific behavior, read the official documentation.
    Check the installed version first.
+
+## State
+
+Keep `.agent/STATE.md` for a task with more than one step, or a task that can outlive the session.
+It holds the contract, current step, decisions with reasons, artifacts, open risks, and next action.
+If it exists, read it before you start. Update it after each step and before you stop.
+Do not commit it. If Git does not ignore `.agent/`, add `.agent/` to `.git/info/exclude`.
 
 ## Search
 
@@ -138,7 +147,7 @@ A command passes only with exit code 0.
    Do not repeat a failed attempt without new evidence.
    After 3 failed attempts on the same problem, stop.
    Revert only your own changes that cause the failure.
-   Report what you know, what you tried, and what is missing.
+   Report what you know, what you tried, and what is missing. Write it in the state file too.
 
 ## Tooling
 
@@ -168,7 +177,7 @@ If your runtime cannot load skills, read `~/.config/agents-harness/skills/<name>
 
 - [ ] Requirements read again.
 - [ ] Final diff inspected.
-- [ ] Acceptance criteria verified.
+- [ ] Each "done when" line has evidence.
 - [ ] Checks run for every stack that changed.
 - [ ] No unintended files, secrets, or user changes touched.
 - [ ] Do not declare completion with an unresolved core failure.
