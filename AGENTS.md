@@ -169,6 +169,7 @@ If your runtime cannot load skills, read `~/.config/agents-harness/skills/<name>
 - Task that asks for a refactor: `harness-refactor`.
 - Work that repeats without a human prompt for each step (`/loop`, schedule, unattended retry loop): `harness-loop`.
 - More than one agent changes files for the same task (the review verifier alone does not count): `harness-graph`.
+- Request to add a lesson to the rules, or to prune the rules ("add this to AGENTS.md"): `harness-lessons`.
 - Before the final report: `harness-review`.
 - Presentation, slide deck, report page, or data chart for people: `harness-presentation`.
 - Work with one of these technologies: its skill.
@@ -192,4 +193,5 @@ VERIFICATION lists only commands that you ran in this session, each with its exi
 If you did not run a check, write "not run".
 Include: what changed, commits made, checks skipped and why.
 Add a DECISIONS list: each decision you made without the user, with the reason.
+Add a LESSONS list: each mistake in this task that a rule or check could prevent. Propose the rule and its level. Do not change the rules unless the task asks.
 For a simple question, answer directly. Do not use sections.

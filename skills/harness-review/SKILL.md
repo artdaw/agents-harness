@@ -29,6 +29,7 @@ Run `git diff` and `git status`. Read the full diff. Answer each question.
 - VERIFICATION lists only commands that you ran in this session.
 - Each assumption and decision is in the DECISIONS list.
 - Each failed or skipped check is in the report with the reason.
+- Each mistake that you, a check, or the verifier caught, and that a rule or check could prevent, is in LESSONS with a proposed rule and level.
 
 If any answer is wrong, fix it. Then run this list again.
 
