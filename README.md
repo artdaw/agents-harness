@@ -46,7 +46,7 @@ For a complete walkthrough with a single task, a loop, and a graph of agents, se
 
 ## Install
 
-Requirements: macOS or Linux, Git, and Claude Code or OpenCode (or both).
+Requirements: macOS or Linux, Git, [jq](https://jqlang.org/) for the guard hooks, and Claude Code or OpenCode (or both).
 `project-init` has two versions with the same behavior: fish (3.5 or later) and bash (3.2 or later, so the macOS `/bin/bash` works).
 Optional: [ripgrep](https://github.com/BurntSushi/ripgrep) and [fff](https://github.com/magnusmalm/fff-cli) for search, and [RTK](https://github.com/rtk-ai/rtk) for shorter command output.
 
@@ -61,7 +61,8 @@ You can clone to any directory. `bin/install.sh`:
 - Links `~/.config/agents-harness` to the checkout. The rules and skills use this fixed path.
 - Adds `@~/.config/agents-harness/AGENTS.md` to `~/.claude/CLAUDE.md` (Claude Code), one time only.
 - Links `~/.config/opencode/AGENTS.md` (OpenCode).
-- Copies `config/claude-settings.json` to `~/.claude/settings.json` if that file does not exist. It is a deny list for commands that the rules forbid. If your file is different, the script does not change it. It prints a warning: merge the permissions by hand.
+- Copies `config/claude-settings.json` to `~/.claude/settings.json` if that file does not exist. It is a deny list for commands that the rules forbid. If your file is different, the script does not change it. It prints a warning: merge the permissions and hooks by hand.
+- Links the OpenCode guard plugin to `~/.config/opencode/plugins/harness-guard.js`. See [Guard hooks](#guard-hooks).
 - Links each skill into `~/.claude/skills/` and `~/.config/opencode/skills/`, and removes links to skills that no longer exist.
 - Links `~/.local/bin/project-init` to the fish version if fish is installed, otherwise to the bash version.
 - Warns if `~/.local/bin` is not in `PATH`.
@@ -87,7 +88,7 @@ Rule changes apply in the next agent session. To pick up new stack sections or t
 Remove the `@~/.config/agents-harness/AGENTS.md` line from `~/.claude/CLAUDE.md`. Remove the harness permissions from `~/.claude/settings.json`. Then remove the symlinks:
 
 ```sh
-rm ~/.config/opencode/AGENTS.md ~/.local/bin/project-init ~/.config/agents-harness
+rm ~/.config/opencode/AGENTS.md ~/.config/opencode/plugins/harness-guard.js ~/.local/bin/project-init ~/.config/agents-harness
 rm ~/.claude/skills/harness-* ~/.config/opencode/skills/harness-*
 ```
 
@@ -374,7 +375,7 @@ The agent removes one rule at a time in a branch, runs its eval scenarios on eac
 
 ## How it works
 
-The harness has five parts. The agent always sees the first two. It loads the skills only when it needs them. The runtime enforces the deny list.
+The harness has six parts. The agent always sees the first two. It loads the skills only when it needs them. The runtime enforces the deny list and the guard hooks.
 
 | Part | Where | When the agent sees it | Contains |
 | --- | --- | --- | --- |
@@ -383,6 +384,28 @@ The harness has five parts. The agent always sees the first two. It loads the sk
 | Process skills | `skills/harness-git`, `harness-debug`, ... | When the task matches, for example a commit or a bug | Step-by-step procedures |
 | Technology skills | `skills/harness-kafka`, `harness-react`, ... | When the task touches that technology | Correct rules for one technology and its versions |
 | Deny list | `config/claude-settings.json`, copied to `~/.claude/settings.json` | Never. Claude Code blocks the command before it runs. | Commands that the rules forbid: force push, `reset --hard`, `terraform apply`, image push. `git push` and `kubectl apply` ask first. |
+| Guard hooks | `hooks/guard.sh`. Claude Code runs it from `~/.claude/settings.json`. OpenCode 1.x runs it through `config/opencode/harness-guard.js`. | Only when it blocks a call: the agent reads the reason. | Blocks edits to `.env` files, lockfiles, and Terraform state; edits to test files in fix mode; a commit that adds a secret. |
+
+### Guard hooks
+
+A skill is advice. A hook runs before each edit or shell command and can block it. `hooks/guard.sh` blocks:
+
+| Call | Why |
+| --- | --- |
+| Edit of `.env` or `.env.*` (not `.env.example`, `.sample`, `.template`, `.dist`) | The file holds secrets. |
+| Edit of a lockfile (`pnpm-lock.yaml`, `uv.lock`, `go.sum`, and others) | Lockfiles change only through the package manager. |
+| Edit of `*.tfstate` | Agents never edit Terraform state. |
+| Edit of a test file while `.agent/STATE.md` has the line `Mode: fix` | The failing test proves the bug. The fix must change the code, not the test. `harness-debug` sets and removes this line. |
+| `git commit` when the staged diff adds a secret (AWS, GitHub, Slack, Google, `sk-` keys, private keys) | Secrets never go into Git. The message names the file and the kind of key, never the value. |
+
+The block message tells the agent the reason and tells it to ask the user. One script serves both runtimes:
+
+- Claude Code: a `PreToolUse` hook in `config/claude-settings.json`. Exit code 2 blocks the call.
+- OpenCode 1.x: a plugin. It converts `edit`, `write`, `apply_patch`, and `bash` calls to the same input and throws when the guard blocks.
+  OpenCode 2.x has a different plugin API and does not load this plugin yet.
+
+Limits: without `jq` the guard allows every call. The commit check reads `git commit` in the command line. It does not see a commit made inside a script or through an alias.
+Run `bin/test-hooks.sh` after a change to the guard or the plugin.
 
 Why this split:
 
@@ -512,11 +535,12 @@ The rules do not depend on a model.
 If a customer allows only OpenAI, use OpenCode.
 The provider check depends on the agent. The real control is the runtime and model that you start.
 
-The rules and skills work the same in both runtimes. Three parts differ:
+The rules and skills work the same in both runtimes. These parts differ:
 
 | Part | Claude Code | OpenCode |
 | --- | --- | --- |
 | Deny list | `config/claude-settings.json`, copied by `install.sh`. The runtime blocks the command. | Not shipped. The OpenCode permission format is not verified yet. Forbidden commands are blocked only by the rules text. |
+| Guard hooks | `PreToolUse` hook in `config/claude-settings.json` | OpenCode 1.x: plugin `config/opencode/harness-guard.js`, linked by `install.sh`. OpenCode 2.x: not supported yet. |
 | Loops | `/loop` with an interval | Start the loop prompt from a scheduler, for example cron or CI. The loop contract in `harness-loop` is the same. |
 | Lessons from PR comments | `@claude` with the Claude Code GitHub Action | Copy the comment into a session, or run OpenCode from a CI workflow that checks `author_association`. See Step 7 of the full example. |
 
@@ -550,6 +574,7 @@ Rules are software. They can be wrong, outdated, or contradictory.
    Remove a rule when the models no longer need it. The `harness-lessons` skill does both: it adds lessons and prunes rules.
 4. Keep `AGENTS.md` short. Move a procedure into a skill. Keep a rule in the core only if it must apply to every task.
 5. After a change to `project-init`, change both `bin/project-init.fish` and `bin/project-init.bash`. Then run `bin/test-project-init.sh` and `bin/test-project-init.sh /bin/bash`. Both must print only `ok` lines.
+6. After a change to `hooks/guard.sh` or `config/opencode/harness-guard.js`, run `bin/test-hooks.sh`. It must exit 0.
 
 ### Add a technology skill
 
@@ -567,7 +592,9 @@ Rules are software. They can be wrong, outdated, or contradictory.
 AGENTS.md              core rules, always loaded
 skills/harness-*/      process and technology skills (SKILL.md, plus hooks/ for harness-git)
 stacks/                stack sections for project-init
-config/                Claude Code deny list, copied by install.sh
+config/                Claude Code deny list and hooks, copied by install.sh; OpenCode guard plugin
+hooks/guard.sh         guard hook for both runtimes
+bin/test-hooks.sh      tests for the guard and the OpenCode plugin
 docs/specs/            design specs for rule changes
 bin/install.sh         one-command install and update
 bin/project-init.fish  project setup (fish)

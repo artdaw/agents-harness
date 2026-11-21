@@ -42,5 +42,18 @@
       "Bash(kubectl delete *)",
       "Bash(kubectl exec *)"
     ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME/.config/agents-harness/hooks/guard.sh\""
+          }
+        ]
+      }
+    ]
   }
 }

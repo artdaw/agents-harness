@@ -22,7 +22,7 @@ link() {
 
 [ -f "$REPO/AGENTS.md" ] && [ -d "$REPO/skills" ] || { echo "ERROR: $REPO is not an agents-harness checkout" >&2; exit 1; }
 
-mkdir -p "$HOME/.config" "$HOME/.claude/skills" "$HOME/.config/opencode/skills" "$HOME/.local/bin"
+mkdir -p "$HOME/.config" "$HOME/.claude/skills" "$HOME/.config/opencode/skills" "$HOME/.config/opencode/plugins" "$HOME/.local/bin"
 
 # 1. Fixed path to this checkout.
 if [ "$REPO" != "$(cd "$HARNESS" 2>/dev/null && pwd -P)" ]; then
@@ -50,6 +50,10 @@ else
     cp "$REPO/config/claude-settings.json" "$settings"
     echo "copied  $settings"
 fi
+
+# 2c. Guard hooks. Claude Code runs hooks/guard.sh from the settings above. OpenCode 1.x runs it through this plugin.
+link "$HARNESS/config/opencode/harness-guard.js" "$HOME/.config/opencode/plugins/harness-guard.js"
+command -v jq >/dev/null 2>&1 || warn "jq is not installed. The guard hooks need it and allow every call without it."
 
 # 3. Skills. Remove harness links whose skill no longer exists.
 for dir in "$HOME/.claude/skills" "$HOME/.config/opencode/skills"; do
