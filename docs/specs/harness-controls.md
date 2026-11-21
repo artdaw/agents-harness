@@ -53,6 +53,11 @@ Its checklist has ten questions. This spec maps each one to the harness.
    Only the task prompt, or a triggering review comment from a person with write access, can ask for a lesson.
    Prune mode removes a rule only with eval results on each model. A human decides.
 
+8. Guard hooks (`hooks/guard.sh`). One script for both runtimes, input in the Claude Code `PreToolUse` format.
+   Claude Code runs it from `config/claude-settings.json`. OpenCode 1.x runs it through `config/opencode/harness-guard.js`.
+   It blocks edits to `.env` files, lockfiles, and Terraform state; edits to test files when `.agent/STATE.md` has `Mode: fix`; and a `git commit` whose diff adds a secret.
+   Exit 2 blocks. Any other result allows the call, so a missing `jq` or guard does not stop work.
+
 ## Acceptance criteria
 
 - `AGENTS.md` stays under 200 lines.
@@ -63,12 +68,15 @@ Its checklist has ten questions. This spec maps each one to the harness.
 - `config/claude-settings.json` is valid JSON.
 - `evals/evals.md` has a scenario for each new behavior, including loops (25 to 27) and graphs (28, 29).
 - `AGENTS.md` names `harness-loop`, `harness-graph`, and `harness-lessons` with a load condition.
+- `bin/test-hooks.sh` exits 0: the guard cases and the same cases through the OpenCode plugin under bun or node.
 - The final report format has a LESSONS list. Evals 30 to 34 cover lessons, pruning, and untrusted requests.
 
 ## Assumptions
 
 - The article does not name its author's runtime config. Deny rules use the Claude Code `permissions.deny` format.
 - No OpenCode permission file. The OpenCode documentation was not reachable, so the format is not verified.
+- The OpenCode plugin targets 1.x. Its API comes from `@opencode-ai/plugin` 1.19.6 types and the 1.19.6 binary: `tool.execute.before`, tools `bash`, `edit`, `write`, `apply_patch`, plugin folders `{plugin,plugins}/*.{ts,js}`, and a default export `{ id, server }`. OpenCode 2.x has a new API (`@opencode/plugin`) and is not supported.
+- The guard fails open (no `jq`, unreadable input), because a broken guard must not stop all work. The tests cover each block.
 - No change to `project-init`. The agent excludes `.agent/` itself. This keeps both scripts unchanged.
 - The core retry rule stays. `harness-loop` adds the loop-level rules: stop check, budget, failure classes.
 - Loops and graphs are skills, not core rules. Most tasks use one agent once. The skills load only when the condition is true.

@@ -8,11 +8,14 @@ description: Use for a bug, a failing test, or an unexpected error, before you c
 1. Reproduce the failure. Run the exact command or test. Save the error text.
    If you cannot reproduce it, write this in the report. Do not guess a fix.
 2. Write a failing test for the failure. If a test is not practical, write the smallest runtime check.
+   Run it and confirm that it fails for the expected reason.
+   Then add the line `Mode: fix` to `.agent/STATE.md`. The guard hook then blocks edits to test files.
 3. Find the root cause. Trace the path from the error to the first wrong value or state.
    Change one thing at a time.
 4. Fix the root cause at the narrowest shared point.
 5. Run the failing test. It must pass.
 6. Run the checks of the stack. They must pass.
+7. Remove the `Mode: fix` line from `.agent/STATE.md`.
 
 ## Do not
 - Do not add `try/except`, `recover`, `catch`, or a `None` check to hide the error.
