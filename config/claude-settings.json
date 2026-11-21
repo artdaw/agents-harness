@@ -1,0 +1,46 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(git push --force)",
+      "Bash(git push --force *)",
+      "Bash(git push -f)",
+      "Bash(git push -f *)",
+      "Bash(git push --force-with-lease)",
+      "Bash(git push --force-with-lease *)",
+      "Bash(git reset --hard)",
+      "Bash(git reset --hard *)",
+      "Bash(git clean *)",
+      "Bash(terraform apply)",
+      "Bash(terraform apply *)",
+      "Bash(terraform destroy)",
+      "Bash(terraform destroy *)",
+      "Bash(terraform import *)",
+      "Bash(terraform state rm *)",
+      "Bash(terraform state mv *)",
+      "Bash(terraform state push *)",
+      "Bash(terraform force-unlock *)",
+      "Bash(tofu apply)",
+      "Bash(tofu apply *)",
+      "Bash(tofu destroy)",
+      "Bash(tofu destroy *)",
+      "Bash(tofu import *)",
+      "Bash(tofu state rm *)",
+      "Bash(tofu state mv *)",
+      "Bash(tofu state push *)",
+      "Bash(tofu force-unlock *)",
+      "Bash(docker push *)",
+      "Bash(docker system prune)",
+      "Bash(docker system prune *)",
+      "Bash(docker volume rm *)",
+      "Bash(docker volume prune)",
+      "Bash(docker volume prune *)"
+    ],
+    "ask": [
+      "Bash(git push)",
+      "Bash(git push *)",
+      "Bash(kubectl apply *)",
+      "Bash(kubectl delete *)",
+      "Bash(kubectl exec *)"
+    ]
+  }
+}
