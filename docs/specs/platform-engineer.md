@@ -31,8 +31,10 @@ Existing skills stay as they are: `harness-postgres`, `harness-temporal`, `harne
    It also reads `*.tf` files, so `azurerm` resources select the Azure, PostgreSQL, and Redis skills.
 4. The agent definition is a thin role. It points to `AGENTS.md`, `harness-sre`, and the technology skills. It does not repeat their rules.
    Claude Code: `agents/claude/platform-engineer.md`. OpenCode 1.x: `agents/opencode/platform-engineer.md`. `install.sh` links both.
-5. The Claude Code deny list adds `ask` rules for `helm install`, `helm upgrade`, `helm uninstall`, and `helm rollback`,
-   and `deny` rules for `az group delete`, `az keyvault purge`, `az aks delete`, `az postgres flexible-server delete`, and `az servicebus namespace delete`.
+5. The Claude Code deny list adds `ask` rules for `helm install`, `helm upgrade`, `helm uninstall` (and its aliases `delete`, `del`, `un`), and `helm rollback`,
+   and `deny` rules for `az group delete`, `az keyvault purge`, `az keyvault secret|key|certificate purge`, `az aks delete`,
+   `az postgres flexible-server delete`, and `az servicebus namespace delete`.
+6. `project-init` ignores full-line comments (`#`, `//`) in manifests and Terraform files. Block comments (`/* */`) are still read.
 
 ## Acceptance criteria
 

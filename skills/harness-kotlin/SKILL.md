@@ -16,9 +16,10 @@ Check the Kotlin, Spring Boot, and JDK versions in the build files first. Build 
 ## Spring Boot
 - Use constructor injection with `val` parameters. Do not add `@Autowired lateinit var` fields.
 - The build needs the `kotlin("plugin.spring")` plugin. Spring proxies need open classes.
-  JPA entities also need `kotlin("plugin.jpa")`.
+- JPA entities need `kotlin("plugin.jpa")` for no-arg constructors, and `allOpen` for `jakarta.persistence.Entity`,
+  `Embeddable`, and `MappedSuperclass`. Without open classes, lazy loading cannot create proxies.
 - Bind configuration with `@ConfigurationProperties` and validate it with `@Validated`. Secrets come from the environment or Key Vault, not from `application.yml`.
-- `@Transactional` works only on public methods called from another bean. A call from the same class skips the proxy.
+- `@Transactional` does not work on a private method or on a call from the same class: the call skips the proxy.
 - Avoid N+1 queries: check the SQL log when you add a relation, and use a fetch join or an entity graph.
 - Actuator: expose only `health`, `info`, and the metrics endpoint that the monitoring uses. Use the liveness and readiness health groups for Kubernetes probes.
 - Metrics and traces go through Micrometer, with the registry that the project uses (Prometheus or OTLP).

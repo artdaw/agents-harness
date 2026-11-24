@@ -17,7 +17,7 @@ The agent prepares a production change. A human applies it. The agent may act up
 6. Name the signals that prove success or failure: a metric, a log query, a trace. Add them if they do not exist.
 7. Check capacity: CPU and memory requests and limits, HPA bounds, database connections
    (pool size x replicas x services must stay under `max_connections`), and queue throughput.
-8. Put steps 3 to 7 in the report or in `.agent/STATE.md`. In other environments, follow the stack rules: plan and dry run only.
+8. Put steps 3 to 7 in the report or in `.agent/STATE.md`. In environments that the task does not allow, follow the stack rules: plan and dry run only.
 
 ## Service reliability checklist
 - Every network call has a timeout. Retry only idempotent calls, with backoff and jitter, and a limit.
@@ -30,9 +30,11 @@ The agent prepares a production change. A human applies it. The agent may act up
 ## Incident
 1. Diagnose read-only. Start from the symptom (SLO, error rate, latency), then check what changed: deploys, configuration, infrastructure, dependencies.
 2. Record a timeline and the evidence in `.agent/STATE.md`: each query or command, and what it showed.
+   Write a summary of the output, not raw customer data. In customer mode, redact customer data.
 3. Propose a mitigation. Rollback of the last change is the default. A human authorizes each production action, unless a runbook pre-approves it.
-4. After recovery, write `lessons/<YYYY-MM>-<slug>.md`: impact, cause, evidence, fix, and follow-ups.
-   Propose an eval scenario and a rule through `harness-lessons`.
+4. After recovery, write the incident record in the final report: impact, cause, evidence, fix, and follow-ups.
+   Write it to a file only if the project already has a place for incident records, or the task asks for one.
+   Put the proposed eval scenario and rule in the LESSONS list of the final report.
 
 ## Do not
 - Do not run a write command before you name its target.

@@ -321,7 +321,8 @@ for f in package.json pyproject.toml requirements*.txt go.mod pom.xml build.grad
 done
 if [ ${#manifests[@]} -gt 0 ]; then
     # Indirect Go dependencies are not used by the project code.
-    deps=$(cat "${manifests[@]}" | grep -vF '// indirect')
+    # Full-line comments (#, //) are not dependencies, for example in Terraform and requirements files.
+    deps=$(cat "${manifests[@]}" | grep -vF '// indirect' | grep -vE '^[[:space:]]*(#|//)')
     for i in "${!TECH_NAMES[@]}"; do
         [ -n "${TECH_PATTERNS[$i]}" ] || continue
         printf '%s\n' "$deps" | grep -qiE -- "${TECH_PATTERNS[$i]}" && add_tech "${TECH_NAMES[$i]}"

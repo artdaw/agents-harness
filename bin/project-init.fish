@@ -239,7 +239,8 @@ set -l manifests package.json pyproject.toml requirements*.txt go.mod pom.xml bu
 set manifests (path filter -f $manifests)
 if set -q manifests[1]
     # Indirect Go dependencies are not used by the project code.
-    set -l deps (cat $manifests | string match -v -- '*// indirect*')
+    # Full-line comments (#, //) are not dependencies, for example in Terraform and requirements files.
+    set -l deps (cat $manifests | string match -v -- '*// indirect*' | string match -v -r -- '^\s*(#|//)')
     for i in (seq (count $TECH_NAMES))
         test -n "$TECH_PATTERNS[$i]"; or continue
         printf '%s\n' $deps | grep -qiE -- $TECH_PATTERNS[$i]; and add_tech $TECH_NAMES[$i]

@@ -38,7 +38,10 @@
       "Bash(az keyvault purge *)",
       "Bash(az aks delete *)",
       "Bash(az postgres flexible-server delete *)",
-      "Bash(az servicebus namespace delete *)"
+      "Bash(az servicebus namespace delete *)",
+      "Bash(az keyvault secret purge *)",
+      "Bash(az keyvault key purge *)",
+      "Bash(az keyvault certificate purge *)"
     ],
     "ask": [
       "Bash(git push)",
@@ -49,7 +52,10 @@
       "Bash(helm install *)",
       "Bash(helm upgrade *)",
       "Bash(helm uninstall *)",
-      "Bash(helm rollback *)"
+      "Bash(helm rollback *)",
+      "Bash(helm delete *)",
+      "Bash(helm del *)",
+      "Bash(helm un *)"
     ]
   },
   "hooks": {

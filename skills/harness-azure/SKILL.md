@@ -13,7 +13,8 @@ description: Use when you work with Azure resources or the az CLI, Terraform azu
 
 ## Identity (Entra ID)
 - Code authenticates with `DefaultAzureCredential` or the managed identity. No client secret or connection string with a key in code or config.
-- Pods on AKS use workload identity: a federated credential on a user-assigned managed identity, and a service account annotation.
+- Pods on AKS use workload identity: a federated credential on a user-assigned managed identity, the client ID annotation on the service account,
+  and the pod label `azure.workload.identity/use: "true"`. Without the label, nothing is injected.
 - Give each identity the smallest role at the smallest scope. Prefer a resource scope to a resource group or subscription scope.
 
 ## Key Vault
@@ -27,7 +28,7 @@ description: Use when you work with Azure resources or the az CLI, Terraform azu
 
 ## Azure Database for PostgreSQL (Flexible Server)
 - Connect with Entra ID authentication or a password from Key Vault. TLS is required.
-- `max_connections` depends on the SKU. Use a pool, or the built-in PgBouncer.
+- `max_connections` depends on the SKU. Use a pool, or the built-in PgBouncer (not available on the Burstable tier).
 - Server parameters change through Terraform. A point-in-time restore creates a new server; it does not overwrite the old one.
 - Follow `harness-postgres` and `stacks/sql.md` for schema and queries.
 
