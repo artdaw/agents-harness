@@ -41,6 +41,12 @@ fx_prisma_mysql() {
     mkdir prisma
     printf '// Moved from Postgres in 2024\ndatasource db {\n  provider = "mysql"\n  url      = env("POSTGRES_URL")\n}\nmodel KafkaOffset {\n  redisKey String @id\n}\n' >prisma/schema.prisma
 }
+fx_platform() {
+    printf '[project]\ndependencies = ["fastapi>=0.115", "prometheus-client"]\n' >pyproject.toml
+    printf 'plugins {\n    kotlin("jvm") version "2.0.0"\n}\n' >build.gradle.kts
+    printf 'resource "azurerm_redis_cache" "c" {}\nresource "azurerm_postgresql_flexible_server" "db" {}\n' >main.tf
+    touch config.alloy
+}
 fx_client() { git init -q; echo '{"dependencies":{"kafkajs":"2"}}' >package.json; }
 fx_symlink() { echo '{"dependencies":{"react":"19"}}' >package.json; echo shared >"$T/shared.md"; ln -s "$T/shared.md" AGENTS.md; }
 fx_existing() { git init -q; printf '# Mine\n' >AGENTS.md; printf 'node_modules/\n' >.gitignore; echo '{}' >package.json; }
@@ -93,6 +99,7 @@ check 'go with indirect dependency' fx_go
 check 'detect python, terraform, docker, sql' fx_mixed
 check 'detect prisma: sql stack and postgres' fx_prisma
 check 'prisma mysql: no postgres, kafka, or redis from names and comments' fx_prisma_mysql
+check 'detect platform stack: fastapi, kotlin, azure, grafana' fx_platform
 check 'explicit stacks' fx_empty --go --web --sql
 check 'customer mode' fx_client --client Acme --provider 'anthropic, openai'
 check 'customer mode, provider placeholder' fx_client --client=Acme

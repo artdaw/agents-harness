@@ -14,11 +14,12 @@ SCRIPT_NAME=$(basename "$0")
 ALL_STACKS=(python go java node web terraform docker sql)
 # Technology skills (skills/harness-<name>), in output order. A pattern matches manifest text;
 # an empty pattern means detection by files only (see below).
-TECH_NAMES=(postgres temporal kafka redis kubernetes langchain datadog react typescript tailwind tanstack)
-TECH_LABELS=(PostgreSQL Temporal Kafka Redis Kubernetes LangChain Datadog React TypeScript Tailwind TanStack)
+TECH_NAMES=(postgres temporal kafka redis kubernetes langchain datadog react typescript tailwind tanstack fastapi kotlin azure grafana)
+TECH_LABELS=(PostgreSQL Temporal Kafka Redis Kubernetes LangChain Datadog React TypeScript Tailwind TanStack FastAPI Kotlin Azure Grafana)
 TECH_PATTERNS=('postgres|psycopg|asyncpg|"pg"|jackc/pgx|lib/pq' 'temporalio|go\.temporal\.io|io\.temporal'
     'kafka|sarama' 'redis|valkey' '' 'langchain|langgraph' 'ddtrace|dd-trace|datadog' '"react"' '"typescript"'
-    'tailwindcss' '@tanstack/')
+    'tailwindcss' '@tanstack/' 'fastapi' 'org\.jetbrains\.kotlin|kotlin\(' 'azurerm|azuread|azure-|@azure/|com\.azure'
+    'grafana|prometheus|loki|mimir')
 
 usage() {
     printf '%s\n' \
@@ -313,8 +314,9 @@ done
 # Detect technology skills from manifests. Lockfiles are not read: they list transitive dependencies.
 # shortcut: only the current directory is scanned, like stack detection; run again in each subproject of a monorepo.
 manifests=()
+# Terraform files count too: providers and resource types name the technology (azurerm_redis_cache).
 for f in package.json pyproject.toml requirements*.txt go.mod pom.xml build.gradle build.gradle.kts \
-    compose.yaml compose.yml docker-compose.yaml docker-compose.yml; do
+    compose.yaml compose.yml docker-compose.yaml docker-compose.yml *.tf; do
     [ -f "$f" ] && manifests+=("$f")
 done
 if [ ${#manifests[@]} -gt 0 ]; then
@@ -332,6 +334,10 @@ done
 [ -f tsconfig.json ] && add_tech typescript
 if any_file Chart.yaml kustomization.yaml kustomization.yml skaffold.yaml || any_dir k8s kubernetes helm charts; then
     add_tech kubernetes
+fi
+alloy_files=(*.alloy)
+if [ ${#alloy_files[@]} -gt 0 ] || any_file prometheus.yml prometheus.yaml; then
+    add_tech grafana
 fi
 TECHS=()
 for t in "${TECH_NAMES[@]}"; do

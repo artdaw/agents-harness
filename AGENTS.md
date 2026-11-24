@@ -170,11 +170,13 @@ If your runtime cannot load skills, read `~/.config/agents-harness/skills/<name>
 - Work that repeats without a human prompt for each step (`/loop`, schedule, unattended retry loop): `harness-loop`.
 - More than one agent changes files for the same task (the review verifier alone does not count): `harness-graph`.
 - Request to add a lesson to the rules, or to prune the rules ("add this to AGENTS.md"): `harness-lessons`.
+- Infrastructure, deploy, CI/CD, alerting, capacity, or incident work: `harness-sre`.
 - Before the final report: `harness-review`.
 - Presentation, slide deck, report page, or data chart for people: `harness-presentation`.
 - Work with one of these technologies: its skill.
   `harness-postgres`, `harness-temporal`, `harness-kafka`, `harness-redis`, `harness-kubernetes`, `harness-langchain`,
-  `harness-datadog`, `harness-react`, `harness-typescript`, `harness-tailwind`, `harness-tanstack`.
+  `harness-datadog`, `harness-react`, `harness-typescript`, `harness-tailwind`, `harness-tanstack`,
+  `harness-fastapi`, `harness-kotlin`, `harness-azure`, `harness-grafana`.
 
 ## Before done
 
