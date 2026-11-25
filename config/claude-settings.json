@@ -33,14 +33,29 @@
       "Bash(docker system prune *)",
       "Bash(docker volume rm *)",
       "Bash(docker volume prune)",
-      "Bash(docker volume prune *)"
+      "Bash(docker volume prune *)",
+      "Bash(az group delete *)",
+      "Bash(az keyvault purge *)",
+      "Bash(az aks delete *)",
+      "Bash(az postgres flexible-server delete *)",
+      "Bash(az servicebus namespace delete *)",
+      "Bash(az keyvault secret purge *)",
+      "Bash(az keyvault key purge *)",
+      "Bash(az keyvault certificate purge *)"
     ],
     "ask": [
       "Bash(git push)",
       "Bash(git push *)",
       "Bash(kubectl apply *)",
       "Bash(kubectl delete *)",
-      "Bash(kubectl exec *)"
+      "Bash(kubectl exec *)",
+      "Bash(helm install *)",
+      "Bash(helm upgrade *)",
+      "Bash(helm uninstall *)",
+      "Bash(helm rollback *)",
+      "Bash(helm delete *)",
+      "Bash(helm del *)",
+      "Bash(helm un *)"
     ]
   },
   "hooks": {

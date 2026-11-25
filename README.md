@@ -63,6 +63,7 @@ You can clone to any directory. `bin/install.sh`:
 - Links `~/.config/opencode/AGENTS.md` (OpenCode).
 - Copies `config/claude-settings.json` to `~/.claude/settings.json` if that file does not exist. It is a deny list for commands that the rules forbid. If your file is different, the script does not change it. It prints a warning: merge the permissions and hooks by hand.
 - Links the OpenCode guard plugin to `~/.config/opencode/plugins/harness-guard.js`. See [Guard hooks](#guard-hooks).
+- Links the agent definitions to `~/.claude/agents/` and `~/.config/opencode/agents/`. See [Agents](#agents).
 - Links each skill into `~/.claude/skills/` and `~/.config/opencode/skills/`, and removes links to skills that no longer exist.
 - Links `~/.local/bin/project-init` to the fish version if fish is installed, otherwise to the bash version.
 - Warns if `~/.local/bin` is not in `PATH`.
@@ -89,6 +90,7 @@ Remove the `@~/.config/agents-harness/AGENTS.md` line from `~/.claude/CLAUDE.md`
 
 ```sh
 rm ~/.config/opencode/AGENTS.md ~/.config/opencode/plugins/harness-guard.js ~/.local/bin/project-init ~/.config/agents-harness
+rm ~/.claude/agents/platform-engineer.md ~/.config/opencode/agents/platform-engineer.md
 rm ~/.claude/skills/harness-* ~/.config/opencode/skills/harness-*
 ```
 
@@ -383,7 +385,7 @@ The harness has six parts. The agent always sees the first two. It loads the ski
 | Project rules | `AGENTS.md` or `ENGAGEMENT.md` in the project, written by `project-init` | Always, in that project | Project facts, stack commands, and the list of technology skills |
 | Process skills | `skills/harness-git`, `harness-debug`, ... | When the task matches, for example a commit or a bug | Step-by-step procedures |
 | Technology skills | `skills/harness-kafka`, `harness-react`, ... | When the task touches that technology | Correct rules for one technology and its versions |
-| Deny list | `config/claude-settings.json`, copied to `~/.claude/settings.json` | Never. Claude Code blocks the command before it runs. | Commands that the rules forbid: force push, `reset --hard`, `terraform apply`, image push. `git push` and `kubectl apply` ask first. |
+| Deny list | `config/claude-settings.json`, copied to `~/.claude/settings.json` | Never. Claude Code blocks the command before it runs. | Commands that the rules forbid: force push, `reset --hard`, `terraform apply`, image push. `git push`, `kubectl apply`, and `helm install`/`upgrade`/`uninstall`/`rollback` (and the `uninstall` aliases) ask first. Deleting an Azure resource group, AKS cluster, PostgreSQL server, or Service Bus namespace, and purging Key Vault secrets, keys, and certificates, are denied. |
 | Guard hooks | `hooks/guard.sh`. Claude Code runs it from `~/.claude/settings.json`. OpenCode 1.x runs it through `config/opencode/harness-guard.js`. | Only when it blocks a call: the agent reads the reason. | Blocks edits to `.env` files, lockfiles, and Terraform state; edits to test files in fix mode; a commit that adds a secret. |
 
 ### Guard hooks
@@ -453,6 +455,7 @@ Language: all reports use [ASD-STE100](https://www.asd-ste100.org/) style. Short
 | `harness-graph` | More than one agent changes files for the task: subagents that write, parallel sessions. One orchestrator, disjoint file ownership, one worktree per writer. Merges one result at a time, and only if the task allows merges. |
 | `harness-sdd` | New feature, public API, schema, persistence, or architecture change. |
 | `harness-lessons` | A task or a review comment asks to add a lesson or a rule, or a task asks to prune the rules. Turns one incident into a rule or checklist line, and moves it down to an automated check or deny rule when the mistake comes back. Prune mode removes rules that the evals show are no longer needed. |
+| `harness-sre` | Infrastructure, deploy, CI/CD, alerting, capacity, or incident work. Production change procedure (target, blast radius, rollout, rollback, signals, capacity), service reliability checklist, and incident procedure. |
 | `harness-review` | Before the final report. Runs an independent verifier in a fresh subagent. The verifier tries to reject the change. |
 | `harness-presentation` | A presentation, slide deck, report page, or data chart for people. Applies Edward Tufte's rules and a defined brand. |
 
@@ -488,11 +491,29 @@ Do not use the `brand-guidelines` skill from that repository for other brands. I
 | `harness-typescript` | TypeScript code, types, or `tsconfig`. | `typescript` in `package.json`, `tsconfig.json` |
 | `harness-tailwind` | Tailwind classes, theme tokens, or config. | `tailwindcss` |
 | `harness-tanstack` | TanStack Query, Router, Start, Table, Form, or Virtual. | `@tanstack/` |
+| `harness-fastapi` | FastAPI endpoints, dependencies, Pydantic models, settings, or tests. | `fastapi` |
+| `harness-kotlin` | Kotlin code, Spring Boot services, JPA entities, coroutines. | The Kotlin Gradle or Maven plugin (`org.jetbrains.kotlin`, `kotlin(...)`) |
+| `harness-azure` | Azure resources, `az`, Terraform `azurerm` or `azuread`, AKS, PostgreSQL Flexible Server, Key Vault, Service Bus, Entra ID. | `azurerm`, `azuread`, `azure-*`, `@azure/`, `com.azure` |
+| `harness-grafana` | Metrics, logs, traces, dashboards, or alert rules for Loki, Grafana, Tempo, Mimir, Prometheus, Alloy. | `grafana`, `prometheus`, `loki`, `mimir`, `*.alloy`, `prometheus.yml` |
 
-Detection reads `package.json`, `pyproject.toml`, `requirements*.txt`, `go.mod` (without `// indirect` lines), Maven and Gradle files, Compose files, and Prisma schemas. It does not read lockfiles.
+Detection reads `package.json`, `pyproject.toml`, `requirements*.txt`, `go.mod` (without `// indirect` lines), Maven and Gradle files, Compose files, Terraform files, and Prisma schemas. It does not read lockfiles.
 
 The `harness-` prefix prevents name conflicts with other installed skills.
 If a runtime cannot load skills, the agent reads `~/.config/agents-harness/skills/<name>/SKILL.md`.
+
+### Agents
+
+An agent definition is a named role that you or an orchestrator can start. It holds no rules of its own: it points to `AGENTS.md` and the skills.
+
+| Agent | Use it for | Loads |
+| --- | --- | --- |
+| `platform-engineer` | Backend, SRE, and DevOps work: infrastructure changes, deploy plans, reliability reviews, incident diagnosis | `harness-sre`, and the skill of each technology it touches (FastAPI, Kotlin, TypeScript, Azure, PostgreSQL, Redis, Temporal, Kubernetes, Grafana, Datadog) |
+
+- Claude Code: `agents/claude/platform-engineer.md`. Start it with "Use the platform-engineer agent to …", or as a worker in `harness-graph`.
+- OpenCode 1.x: `agents/opencode/platform-engineer.md` with `mode: all`, so you can select it as the main agent or call it as a subagent.
+- The two files have the same body. Only the frontmatter differs. Change both together.
+
+The agent prepares production changes, and a human applies them. It names the target (Kubernetes context, Azure subscription, Terraform workspace) before each command that can change something.
 
 ### Commit hook
 
@@ -593,6 +614,8 @@ AGENTS.md              core rules, always loaded
 skills/harness-*/      process and technology skills (SKILL.md, plus hooks/ for harness-git)
 stacks/                stack sections for project-init
 config/                Claude Code deny list and hooks, copied by install.sh; OpenCode guard plugin
+agents/claude/         agent definitions for Claude Code
+agents/opencode/       agent definitions for OpenCode (same body, different frontmatter)
 hooks/guard.sh         guard hook for both runtimes
 bin/test-hooks.sh      tests for the guard and the OpenCode plugin
 docs/specs/            design specs for rule changes

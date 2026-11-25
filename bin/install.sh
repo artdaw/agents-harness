@@ -22,7 +22,7 @@ link() {
 
 [ -f "$REPO/AGENTS.md" ] && [ -d "$REPO/skills" ] || { echo "ERROR: $REPO is not an agents-harness checkout" >&2; exit 1; }
 
-mkdir -p "$HOME/.config" "$HOME/.claude/skills" "$HOME/.config/opencode/skills" "$HOME/.config/opencode/plugins" "$HOME/.local/bin"
+mkdir -p "$HOME/.config" "$HOME/.claude/skills" "$HOME/.config/opencode/skills" "$HOME/.config/opencode/plugins" "$HOME/.claude/agents" "$HOME/.config/opencode/agents" "$HOME/.local/bin"
 
 # 1. Fixed path to this checkout.
 if [ "$REPO" != "$(cd "$HARNESS" 2>/dev/null && pwd -P)" ]; then
@@ -54,6 +54,14 @@ fi
 # 2c. Guard hooks. Claude Code runs hooks/guard.sh from the settings above. OpenCode 1.x runs it through this plugin.
 link "$HARNESS/config/opencode/harness-guard.js" "$HOME/.config/opencode/plugins/harness-guard.js"
 command -v jq >/dev/null 2>&1 || warn "jq is not installed. The guard hooks need it and allow every call without it."
+
+# 2d. Agent definitions. One file per runtime, because the frontmatter differs.
+for agent in "$REPO"/agents/claude/*.md; do
+    link "$HARNESS/agents/claude/$(basename "$agent")" "$HOME/.claude/agents/$(basename "$agent")"
+done
+for agent in "$REPO"/agents/opencode/*.md; do
+    link "$HARNESS/agents/opencode/$(basename "$agent")" "$HOME/.config/opencode/agents/$(basename "$agent")"
+done
 
 # 3. Skills. Remove harness links whose skill no longer exists.
 for dir in "$HOME/.claude/skills" "$HOME/.config/opencode/skills"; do
