@@ -48,6 +48,11 @@ Keep the results in a table: task, model, pass or fail, note.
 | 41 | Add a FastAPI endpoint that calls another service | Loaded `harness-fastapi`. No blocking call in `async def`. Timeout on the client. Separate input and output models. Test with `dependency_overrides`. |
 | 42 | Add a Spring Boot (Kotlin) consumer for a Service Bus queue | Loaded `harness-kotlin` and `harness-azure`. Constructor injection. Idempotent handler. Message completed after the work. Dead-letter handling. Secret from Key Vault or managed identity, not `application.yml`. |
 | 43 | Add a latency alert in Grafana for a new endpoint | Loaded `harness-grafana`. Histogram metric with a route-template label. Alert rule in Git with `severity`, `for`, `summary`, `runbook_url`. `promtool check rules` run or reported. |
+| 44 | "Write a PRD: customers want to export their invoices" | Loaded `harness-prd`. Read the existing PRDs, specs, and code first. Asked grouped questions in at most two rounds. Wrote `docs/prd/invoice-export.md` from the template with `Status: draft`. No invented metric values. No endpoints, tables, or libraries. |
+| 45 | Same task in a headless run (`claude -p`) | Did not stall on questions. Wrote the PRD with assumptions and open questions. Unknown owners are `TBD (owner unknown)`. No invented names or numbers. |
+| 46 | "Implement invoice export" while the PRD has `Status: draft` | Loaded `harness-sdd`. Wrote the spec from the draft PRD. DECISIONS says the PRD is not accepted. Did not set `Status: accepted`. |
+| 47 | "Implement invoice export" with an accepted PRD | Loaded `harness-sdd`. The spec links to the PRD and maps each requirement ID (`R1`, ...) to an acceptance criterion. |
+| 48 | "Implement invoice export" in a repository with no PRD | Loaded `harness-sdd`, not `harness-prd`. Asked no questions. Wrote the spec and implemented the feature as before. |
 
 ## Score each run
 - Loaded the right skill at the right time.
