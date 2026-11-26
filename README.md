@@ -455,6 +455,7 @@ Language: all reports use [ASD-STE100](https://www.asd-ste100.org/) style. Short
 | `harness-graph` | More than one agent changes files for the task: subagents that write, parallel sessions. One orchestrator, disjoint file ownership, one worktree per writer. Merges one result at a time, and only if the task allows merges. |
 | `harness-prd` | An explicit request for a PRD, product requirements, or a feature brief. A request to build goes to `harness-sdd`. Interviews in at most two rounds, writes `docs/prd/<feature>.md` from `skills/harness-prd/template.md`, and checks it: testable requirements with IDs, metrics with baseline, target, source, and owner, no invented numbers or people, no solution design. A human accepts it. When a PRD exists, `harness-sdd` links the spec to it. A spec does not need a PRD. |
 | `harness-sdd` | New feature, public API, schema, persistence, or architecture change. |
+| `harness-adr` | An explicit request for an ADR, or a decision in a spec that is hard to reverse (datastore, protocol, framework, service boundary, security model, or a dependency that many modules use). Writes a Michael Nygard ADR (Title, Context, Decision, Status, Consequences) to `docs/adr/NNNN-<title>.md` from `skills/harness-adr/template.md`. Status starts as `Proposed`; the agent sets `Accepted` only when a human says so, and then marks the ADRs it supersedes. An accepted ADR is never edited or deleted: a new ADR supersedes it. |
 | `harness-lessons` | A task or a review comment asks to add a lesson or a rule, or a task asks to prune the rules. Turns one incident into a rule or checklist line, and moves it down to an automated check or deny rule when the mistake comes back. Prune mode removes rules that the evals show are no longer needed. |
 | `harness-sre` | Infrastructure, deploy, CI/CD, alerting, capacity, or incident work. Production change procedure (target, blast radius, rollout, rollback, signals, capacity), service reliability checklist, and incident procedure. |
 | `harness-review` | Before the final report. Runs an independent verifier in a fresh subagent. The verifier tries to reject the change. |
@@ -612,7 +613,7 @@ Rules are software. They can be wrong, outdated, or contradictory.
 
 ```
 AGENTS.md              core rules, always loaded
-skills/harness-*/      process and technology skills (SKILL.md, plus hooks/ for harness-git and template.md for harness-prd)
+skills/harness-*/      process and technology skills (SKILL.md, plus hooks/ for harness-git and template.md for harness-prd and harness-adr)
 stacks/                stack sections for project-init
 config/                Claude Code deny list and hooks, copied by install.sh; OpenCode guard plugin
 agents/claude/         agent definitions for Claude Code

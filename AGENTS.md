@@ -160,7 +160,7 @@ If a command is denied, report it. Do not look for a bypass.
 Load the skill when the condition is true. Do not load the other skills. If your runtime cannot load skills, read `~/.config/agents-harness/skills/<name>/SKILL.md`.
 
 - Commit, branch, or staging: `harness-git`.
-- Explicit request for a PRD, product requirements, or a feature brief: `harness-prd`. A request to build goes to `harness-sdd`.
+- Explicit request for a PRD, product requirements, or a feature brief: `harness-prd`. For an ADR or a decision record: `harness-adr`. A request to build goes to `harness-sdd`.
 - New feature, public API, schema, persistence, or architecture change: `harness-sdd`.
 - Bug, failing test, or unexpected error: `harness-debug`.
 - Any test that you add or change: `harness-testing`.
