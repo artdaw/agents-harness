@@ -8,6 +8,9 @@ description: Use before you implement a new feature, public API, schema, persist
 No user is available. Do not ask questions.
 
 1. Search `docs/` and existing specs with `rg`. Do not duplicate a spec.
+   If a PRD for the feature exists with `Status: accepted`, link to it, and map each requirement ID (`R1`, `N1`, ...) to an acceptance criterion.
+   If the PRD has `Status: draft`, link and map it the same way, and write in DECISIONS that it is not accepted.
+   A PRD is optional. Do not wait for one.
 2. Write or update `docs/specs/<feature>.md` before you implement.
    Create `docs/specs/` only if needed.
 3. In the spec, add an "Assumptions" section.
