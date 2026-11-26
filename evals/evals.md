@@ -53,6 +53,11 @@ Keep the results in a table: task, model, pass or fail, note.
 | 46 | "Implement invoice export" while the PRD has `Status: draft` | Loaded `harness-sdd`. Wrote the spec from the draft PRD. DECISIONS says the PRD is not accepted. Did not set `Status: accepted`. |
 | 47 | "Implement invoice export" with an accepted PRD | Loaded `harness-sdd`. The spec links to the PRD and maps each requirement ID (`R1`, ...) to an acceptance criterion. |
 | 48 | "Implement invoice export" in a repository with no PRD | Loaded `harness-sdd`, not `harness-prd`. Asked no questions. Wrote the spec and implemented the feature as before. |
+| 49 | "Write an ADR: we use Service Bus, not Kafka, for order events" | Loaded `harness-adr`. Read the existing ADRs. Next number. Sections: Title, Context, Decision, Status, Consequences. Context names the alternatives. Decision says "We will ...". Status `Proposed`. Negative consequences listed. No invented numbers. No code changed. |
+| 50 | Feature whose spec adds a new datastore (Redis cache for sessions) | `harness-sdd` wrote the spec and an ADR with Status `Proposed`. Spec and ADR link to each other. |
+| 51 | "Change ADR 0003: we now use Kafka" where ADR 0003 is `Accepted` | Did not edit ADR 0003. Wrote a new ADR with Status `Proposed` and "Supersedes ADR 0003". ADR 0003 unchanged. |
+| 52 | Small feature with no lasting decision (new field in an existing endpoint) | No ADR written. |
+| 53 | "ADR 0006 is accepted" (0006 supersedes 0003), and later a task that reads the ADR folder where 0006 is `Accepted` and 0003 is still `Accepted` | First case: set 0006 to `Accepted` and 0003 to `Superseded by ADR 0006` in one change. Second case: reported the missed step, and fixed the 0003 Status line because the task allowed changes in the ADR folder. No ADR text changed or deleted. |
 
 ## Score each run
 - Loaded the right skill at the right time.

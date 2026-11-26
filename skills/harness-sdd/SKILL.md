@@ -13,6 +13,9 @@ No user is available. Do not ask questions.
    A PRD is optional. Do not wait for one.
 2. Write or update `docs/specs/<feature>.md` before you implement.
    Create `docs/specs/` only if needed.
+   If the spec makes a decision that is hard to reverse (datastore, protocol, framework, service boundary, security model,
+   or a dependency that many modules use),
+   also write an ADR with `harness-adr`. Link the spec and the ADR to each other.
 3. In the spec, add an "Assumptions" section.
    For each unclear decision, write the choice you made and the reason.
    Choose the option that is reversible and keeps existing behavior.
